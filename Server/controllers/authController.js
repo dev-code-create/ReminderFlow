@@ -36,3 +36,25 @@ export const login = async (req, res) => {
     res.status(500).json({ error: "Server error: " + err.message });
   }
 };
+
+export const updateUser = async (req, res) => {
+  try {
+    const { email, phone, password } = req.body;
+    const user = await User.findById(req.userId);
+
+    if (!user) return res.status(404).json({ error: "User not found!" });
+
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+    if (password) user.password = password;
+
+    await user.save();
+
+    // Remove password from response
+    const userData = user.toObject();
+    delete userData.password;
+    res.json(userData);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
