@@ -2,20 +2,19 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema({
-  email: {
-    type: String,
-    required: [true, "Email is required"],
-    unique: true,
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  firstName: { type: String, required: true },
+  lastName: { type: String },
+  phoneNumber: { type: String },
+  notificationPreferences: {
+    email: { type: Boolean, default: true },
+    sms: { type: Boolean, default: false },
+    push: { type: Boolean, default: true },
   },
-  password: {
-    type: String,
-    required: [true, "Password is required"],
-  },
-  phone: {
-    type: String,
-    required: [true, "Phone number is required for sms reminder"],
-    unique: true,
-  },
+  timezone: { type: String, default: "UTC" },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
 
 userSchema.pre("save", async function (next) {
