@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const taskSchema = new mongoose.Schema({
+const reminderSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String },
   creator: {
