@@ -7,6 +7,7 @@ export const authMiddleware = (req, res, next) => {
     });
   try {
     const decoded = jwt.verify(token, process.env.jwt_secret);
+    req.user = decoded.id;
   } catch (error) {
     res.status(401).json({ message: "token is not valid" });
   }
