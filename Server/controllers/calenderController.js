@@ -38,3 +38,22 @@ export const getCalenderIntegration = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+export const toggleSync = async (req, res) => {
+  try {
+    const calenderIntegration = await CalenderIntegration.findOne({
+      user: req.user.id,
+    });
+    if (!calenderIntegration)
+      return res.status(404).json({ message: "No calender Integration Found" });
+    calenderIntegration.syncEnabled = !calenderIntegration.syncEnabled;
+    await calenderIntegration.save();
+    res.json({
+      message: `Sync ${
+        calenderIntegration.syncEnabled ? "enabled" : "disabled"
+      }`,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
