@@ -1,19 +1,14 @@
-import jwt from "jsonwebtoken";
+import { jwt } from "jsonwebtoken";
 
-const authMiddleware = (req, res, next) => {
+export const authMiddleware = (req, res, next) => {
+  const token = req.header("Authorization")?.replace("Bearer", "");
+  if (!token)
+    return res.status(401).json({
+      message: "No token,Authorization denied",
+    });
   try {
-    const token = req.headers.authorization.split(" ")[1];
-    if (!token) {
-      return res.status(401).json({ message: "Authentication failed" });
-    }
-
-    const decodedData = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decodedData?.id;
-
-    next();
+    const decoded = jwt.verify(token, process.env.jwt_secret);
   } catch (error) {
-    res.status(401).json({ message: "Authentication failed" });
+    res.status(401).json({ message: "token is not valid" });
   }
 };
-
-export default authMiddleware;
