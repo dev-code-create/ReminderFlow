@@ -1,31 +1,33 @@
-import Reminder from "../models/Reminder.js";
+import Task from "../models/task.model";
 
-// Create Reminder
-export const createReminder = async (req, res) => {
+// Create Task
+export const createTask = async (req, res) => {
+  const { title, description, dueDate, priority, assignees } = req.body;
+
   try {
-    const { title, description, dueDate, priority } = req.body;
-
-    const reminder = new Reminder({
-      user: req.userId,
+    const task = new Task({
       title,
       description,
-      dueDate: new Date(dueDate),
+      dueDate,
       priority,
+      creator: req.user.id,
+      assignees,
     });
-
-    await reminder.save();
-    res.status(201).json(reminder);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+    await task.save();
+    res.status(201).json(task);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// Get All Reminders for User
-export const getReminders = async (req, res) => {
+// Get Tasks
+export const getTasks = async (req, res) => {
   try {
-    const reminders = await Reminder.find({ user: req.userId });
-    res.json(reminders);
-  } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    const tasks = await Task.find({ creator: req.user.id }).populate(
+      "assignees"
+    );
+    res.json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
 };

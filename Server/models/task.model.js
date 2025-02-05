@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const reminderSchema = new mongoose.Schema({
+const taskSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String },
   creator: {
@@ -39,6 +39,6 @@ const reminderSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-const Reminder = mongoose.model("Reminder", reminderSchema);
+const Task = mongoose.model("Task", taskSchema);
 
-export default Reminder;
+export default Task;
