@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import mongoDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
+import { authMiddleware } from "./middleware/authMiddleware.js";
 
 dotenv.config();
 mongoDB();
@@ -13,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/users", authRoutes);
-app.use("/api/task", taskRoutes);
+app.use("/api/task", authMiddleware, taskRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
