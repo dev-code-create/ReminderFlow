@@ -8,7 +8,7 @@ import {
 const router = express.Router();
 
 router.post("/connect", authMiddleware, connectCalender);
-router.get("/get", authMiddleware, getCalenderIntegration);
+router.get("/CalenderDetails", authMiddleware, getCalenderIntegration);
 router.put("/toggle-sync", authMiddleware, toggleSync);
 
 export default router;
