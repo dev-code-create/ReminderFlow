@@ -1,34 +1,38 @@
 import passport from "passport";
 import GoogleStrategy from "passport-google-oauth20";
 import User from "../models/user.model.js";
-import CalenderIntegration from "../models/calenderIntergration.model.js";
+import CalenderIntegration from "../models/calenderIntegration.model.js";
+import dotenv from "dotenv";
 
+dotenv.config();
 passport.use(
-  new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "/auth/google/callback",
-  }),
-  async (accessToken, refreshToken, profile, done) => {
-    try {
-      const user = await User.findOne({ googleId: profile.id });
-      if (!user) {
-        return done(null, false, { message: "User not found" });
-      }
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "/auth/google/callback",
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        const user = await User.findOne({ googleId: profile.id });
+        if (!user) {
+          return done(null, false, { message: "User not found" });
+        }
 
-      const calenderIntegration = new CalenderIntegration({
-        user: user._id,
-        provider: "google",
-        accessToken,
-        refreshToken,
-        expiresAt: new Date(Date.now() + 3600 * 1000),
-      });
-      await calenderIntegration.save();
-      return done(null, user);
-    } catch (error) {
-      return done(error, false);
+        const calenderIntegration = new CalenderIntegration({
+          user: user._id,
+          provider: "google",
+          accessToken,
+          refreshToken,
+          expiresAt: new Date(Date.now() + 3600 * 1000),
+        });
+        await calenderIntegration.save();
+        return done(null, user);
+      } catch (error) {
+        return done(error, false);
+      }
     }
-  }
+  )
 );
 
 export const authenticateGoogle = passport.authenticate("google", {

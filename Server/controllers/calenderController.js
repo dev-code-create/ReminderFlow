@@ -1,4 +1,4 @@
-import CalenderIntegration from "../models/calenderIntergration.model";
+import CalenderIntegration from "../models/calenderIntegration.model.js";
 
 export const connectCalender = async (req, res) => {
   const { provider, accessToken, refreshToken, expiresAt } = req.body;

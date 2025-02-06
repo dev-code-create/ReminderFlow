@@ -18,7 +18,7 @@ const calenderIntegrationSchema = new mongoose.Schema({
     type: Date,
   },
   syncEnabled: {
-    type: boolean,
+    type: Boolean,
     default: false,
   },
   lastSyncAt: {
