@@ -1,6 +1,7 @@
 import passport from "passport";
 import GoogleStrategy from "passport-google-oauth20";
 import User from "../models/user.model";
+import CalenderIntegration from "../models/calenderIntergration.model";
 
 passport.use(
   new GoogleStrategy({
@@ -15,7 +16,7 @@ passport.use(
         return done(null, false, { message: "User not found" });
       }
 
-      const calenderIntegration = new calenderIntegration({
+      const calenderIntegration = new CalenderIntegration({
         user: user._id,
         provider: "google",
         accessToken,

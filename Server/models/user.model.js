@@ -12,6 +12,15 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  calendarIntegration: {
+    syncEnabled: {
+      type: Boolean,
+      default: false, // Default value: syncing is disabled
+    },
+    provider: {
+      type: String,
+      enum: ['google', 'outlook'], // Supported providers
+    },
   notificationPreferences: {
     email: { type: Boolean, default: true },
     sms: { type: Boolean, default: false },
