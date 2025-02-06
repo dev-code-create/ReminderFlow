@@ -7,6 +7,11 @@ const userSchema = new mongoose.Schema({
   firstName: { type: String, required: true },
   lastName: { type: String },
   phoneNumber: { type: String },
+  googleId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   notificationPreferences: {
     email: { type: Boolean, default: true },
     sms: { type: Boolean, default: false },
