@@ -1,7 +1,7 @@
 import passport from "passport";
 import GoogleStrategy from "passport-google-oauth20";
-import User from "../models/user.model";
-import CalenderIntegration from "../models/calenderIntergration.model";
+import User from "../models/user.model.js";
+import CalenderIntegration from "../models/calenderIntergration.model.js";
 
 passport.use(
   new GoogleStrategy({

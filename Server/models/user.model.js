@@ -19,8 +19,9 @@ const userSchema = new mongoose.Schema({
     },
     provider: {
       type: String,
-      enum: ['google', 'outlook'], // Supported providers
+      enum: ["google", "outlook"], // Supported providers
     },
+  },
   notificationPreferences: {
     email: { type: Boolean, default: true },
     sms: { type: Boolean, default: false },

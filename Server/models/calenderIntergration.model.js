@@ -35,7 +35,7 @@ const calenderIntegrationSchema = new mongoose.Schema({
 });
 
 const CalenderIntegration = mongoose.model(
-  "CalendarIntegration",
+  "CalenderIntegration",
   calenderIntegrationSchema
 );
 

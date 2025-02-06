@@ -1,10 +1,10 @@
 import express from "express";
-import { authMiddleware } from "../middleware/authMiddleware";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 import {
   connectCalender,
   getCalenderIntegration,
   toggleSync,
-} from "../controllers/calenderController";
+} from "../controllers/calenderController.js";
 const router = express.Router();
 
 router.post("/connect", authMiddleware, connectCalender);
