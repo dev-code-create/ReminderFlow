@@ -7,6 +7,7 @@ import taskRoutes from "./routes/taskRoutes.js";
 import { authMiddleware } from "./middleware/authMiddleware.js";
 import calenderRoutes from "./routes/calenderRoutes.js";
 import { authenticateGoogle, googleCallback } from "./services/oauth.js";
+import "./services/cronJobs.js";
 
 dotenv.config();
 mongoDB();

@@ -1,6 +1,6 @@
 import cron from "node-cron";
-import User from "../models/user.model";
-import { syncCalender } from "./calenderSync";
+import User from "../models/user.model.js";
+import { syncCalender } from "./calenderSync.js";
 
 // Schedule a daily cron job at midnight
 cron.schedule("0 0 * * *", async () => {
