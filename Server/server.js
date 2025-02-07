@@ -8,7 +8,9 @@ import { authMiddleware } from "./middleware/authMiddleware.js";
 import calenderRoutes from "./routes/calenderRoutes.js";
 import { authenticateGoogle, googleCallback } from "./services/oauth.js";
 import "./services/cronJobs.js";
+import { scheduleRecurringTask } from "./services/recurrenceTask.js";
 
+scheduleRecurringTask();
 dotenv.config();
 mongoDB();
 const app = express();

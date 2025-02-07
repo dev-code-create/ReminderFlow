@@ -1,7 +1,8 @@
 import admin from "firebase-admin";
+
 admin.initializeApp({
   credential: admin.credential.cert(
-    json.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+    JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
   ),
 });
 

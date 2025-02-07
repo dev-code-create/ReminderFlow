@@ -1,7 +1,7 @@
-import User from "../models/user.model";
-import { sendEmail } from "./email";
-import { sendPushNotification } from "./push";
-import { sendSms } from "./twilio";
+import User from "../models/user.model.js";
+import { sendEmail } from "./email.js";
+import { sendPushNotification } from "./push.js";
+import { sendSms } from "./twilio.js";
 
 export const sendNotification = async (user, reminder) => {
   const { notificationPreferences } = User;
