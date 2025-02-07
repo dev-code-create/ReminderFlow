@@ -29,3 +29,27 @@ export const getTasks = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const deleteTask = async (req, res) => {
+  const { taskId } = req.params;
+
+  try {
+    // Find the task
+    const task = await Task.findById(taskId);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+
+    // Ensure the authenticated user is the creator of the task
+    if (!task.creator.equals(req.user.id)) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to delete this task" });
+    }
+
+    // Delete the task
+    await task.remove();
+
+    res.json({ message: "Task deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
