@@ -5,10 +5,10 @@ import mongoDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
 import { authMiddleware } from "./middleware/authMiddleware.js";
-import calenderRoutes from "./routes/calenderRoutes.js";
-import { authenticateGoogle, googleCallback } from "./services/oauth.js";
 import "./services/cronJobs.js";
 import { scheduleRecurringTask } from "./services/recurrenceTask.js";
+import calenderRoutes from "./routes/calenderRoutes.js";
+import calendarOauth from "./routes/calendarOauth.js";
 
 scheduleRecurringTask();
 dotenv.config();
@@ -20,13 +20,9 @@ app.use(express.json());
 
 app.use("/api/users", authRoutes);
 app.use("/api/task", authMiddleware, taskRoutes);
-
-// calender routes
 app.use("/api/calender", calenderRoutes);
-app.get("/auth/google", authenticateGoogle);
-app.get("/auth/google/callback", googleCallback, (req, res) => {
-  res.redirect("/dashboard");
-});
+
+app.use("/api/calendarAuth", calendarOauth);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
