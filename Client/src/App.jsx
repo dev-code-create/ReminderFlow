@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Dashboard from "./components/DashBoard";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./components/auth/Login";
-
+import Register from "./components/auth/Register";
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
@@ -15,7 +15,7 @@ const App = () => {
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<Login />} />
-        {/* <Route path="/register" element={<Register />} /> */}
+        <Route path="/register" element={<Register />} />
         <Route
           path="/dashboard"
           element={
