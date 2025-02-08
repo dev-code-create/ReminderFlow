@@ -1,5 +1,5 @@
 import express from "express";
-import { authenticateGoogle, googleCallback } from "../services/oauth";
+import { authenticateGoogle, googleCallback } from "../services/oauth.js";
 
 const router = express.Router();
 
