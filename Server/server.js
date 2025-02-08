@@ -19,7 +19,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/users", authRoutes);
-app.use("/api/task", authMiddleware, taskRoutes);
+app.use("/api/tasks", authMiddleware, taskRoutes);
 app.use("/api/calender", calenderRoutes);
 
 app.use("/api/calendarAuth", calendarOauth);
