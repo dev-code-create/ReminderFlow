@@ -23,7 +23,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-primary via-black to-brand-secondary">
-      <div className="w-full max-w-lg p-8 space-y-8 bg-white rounded-2xl shadow-xl">
+      <div className="w-full max-w-[350px] md:max-w-lg p-8 space-y-8 bg-white rounded-2xl shadow-xl">
         <div className="text-center space-y-2">
           <h2 className="text-3xl font-bold text-brand-dark">Welcome Back</h2>
           <p className="text-gray-600">Sign in to continue to ReminderFlow</p>

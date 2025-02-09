@@ -9,8 +9,9 @@ const userSchema = new mongoose.Schema({
   phoneNumber: { type: String },
   googleId: {
     type: String,
-    required: true,
+    required: false,
     unique: true,
+    sparse: true,
   },
   calendarIntegration: {
     syncEnabled: {
@@ -19,7 +20,8 @@ const userSchema = new mongoose.Schema({
     },
     provider: {
       type: String,
-      enum: ["google", "outlook"], // Supported providers
+      enum: ["google", "outlook", null],
+      default: null,
     },
   },
   notificationPreferences: {

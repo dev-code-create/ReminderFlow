@@ -5,18 +5,32 @@ import User from "../models/user.model.js";
 
 // Register User
 export const registerUser = async (req, res) => {
-  const { email, password, firstName, lastName } = req.body;
-
   try {
-    let user = await User.findOne({ email });
+    const { email, password, firstName, lastName } = req.body;
+    const user = await User.findOne({ email });
     if (user) return res.status(400).json({ message: "User already exists" });
 
     user = new User({ email, password, firstName, lastName });
     user.password = await bcrypt.hash(password, 10);
     await user.save();
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+    // Generate JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "24h",
+    });
+
+    // Return user data (excluding password) and token
+    const userResponse = {
+      _id: user._id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
+
+    res.status(201).json({
+      message: "User registered successfully",
+      user: userResponse,
+      token,
     });
     res.status(201).json({ token });
   } catch (error) {
