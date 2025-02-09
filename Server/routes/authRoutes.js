@@ -8,7 +8,7 @@ import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/signup", registerUser);
+router.post("/register", registerUser);
 router.post("/signin", loginUser);
 router.put("/update/:id", authMiddleware, updateUser);
 

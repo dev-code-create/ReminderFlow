@@ -13,34 +13,63 @@ const Register = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError(""); // Clear error when user types
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      console.error("Passwords don't match");
+    setError("");
+    setLoading(true);
+
+    // Validation
+    if (!agreeToTerms) {
+      setError("Please agree to the Terms of Service and Privacy Policy");
+      setLoading(false);
       return;
     }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      setLoading(false);
+      return;
+    }
+
     try {
       await register(formData);
       navigate("/dashboard");
     } catch (error) {
-      console.error(error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-light via-white to-brand-light py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-primary via-black to-brand-secondary py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-xl">
         <div className="text-center space-y-2">
           <h2 className="text-3xl font-bold text-brand-dark">Create Account</h2>
           <p className="text-gray-600">Get started with ReminderFlow</p>
         </div>
+
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 text-red-700">
+            <p>{error}</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
@@ -151,9 +180,17 @@ const Register = () => {
 
           <button
             type="submit"
-            className="w-full py-3 px-4 bg-brand-primary text-white font-medium rounded-lg hover:bg-brand-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-colors duration-200"
+            disabled={loading}
+            className={`w-full py-3 px-4 bg-brand-primary text-white font-medium rounded-lg 
+              ${
+                loading
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-brand-secondary"
+              } 
+              focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary 
+              transition-colors duration-200`}
           >
-            Create Account
+            {loading ? "Creating Account..." : "Create Account"}
           </button>
 
           <div className="relative text-center">
@@ -172,7 +209,7 @@ const Register = () => {
               type="button"
               className="flex items-center justify-center gap-2 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
             >
-              <FaGoogle className="text-red-500" />
+              <FaGoogle className="" />
               <span className="text-gray-700 font-medium">Google</span>
             </button>
             <button
