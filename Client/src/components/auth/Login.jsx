@@ -22,8 +22,8 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-light via-white to-brand-light">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-primary via-black to-brand-secondary">
+      <div className="w-full max-w-lg p-8 space-y-8 bg-white rounded-2xl shadow-xl">
         <div className="text-center space-y-2">
           <h2 className="text-3xl font-bold text-brand-dark">Welcome Back</h2>
           <p className="text-gray-600">Sign in to continue to ReminderFlow</p>
@@ -37,7 +37,7 @@ const Login = () => {
               </label>
               <input
                 type="email"
-                placeholder="name@company.com"
+                placeholder="username@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
@@ -108,7 +108,7 @@ const Login = () => {
               type="button"
               className="flex items-center justify-center gap-2 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
             >
-              <FaGoogle className="text-red-500" />
+              <FaGoogle className="" />
               <span className="text-gray-700 font-medium">Google</span>
             </button>
             <button
