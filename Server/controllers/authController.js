@@ -1,16 +1,16 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
 import User from "../models/user.model.js";
 
 // Register User
 export const registerUser = async (req, res) => {
   try {
     const { email, password, firstName, lastName } = req.body;
-    const user = await User.findOne({ email });
-    if (user) return res.status(400).json({ message: "User already exists" });
+    const userCheck = await User.findOne({ email });
+    if (userCheck)
+      return res.status(400).json({ message: "User already exists" });
 
-    user = new User({ email, password, firstName, lastName });
+    const user = new User({ email, password, firstName, lastName });
     user.password = await bcrypt.hash(password, 10);
     await user.save();
 
@@ -32,8 +32,8 @@ export const registerUser = async (req, res) => {
       user: userResponse,
       token,
     });
-    res.status(201).json({ token });
   } catch (error) {
+    console.error("Error in registerUser:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
