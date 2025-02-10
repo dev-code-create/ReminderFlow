@@ -49,7 +49,6 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log("Logging in with:", email, password);
 
     const user = await User.findOne({ email });
     if (!user) {
@@ -57,12 +56,11 @@ export const loginUser = async (req, res) => {
     }
 
     // Since password is already hashed in the database, use bcrypt.compare
-    console.log("hashed password", user.password);
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
-    console.log("isMatch", isMatch);
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "24h",
