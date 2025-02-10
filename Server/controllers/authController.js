@@ -118,7 +118,7 @@ export const updateUser = async (req, res) => {
   }
 };
 
-// Add the /me endpoint
+// Add the /me endpoint done
 export const getCurrentUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select("-password");
@@ -128,6 +128,6 @@ export const getCurrentUser = async (req, res) => {
     res.json(user);
   } catch (error) {
     console.error("Get current user error:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error : )" });
   }
 };
