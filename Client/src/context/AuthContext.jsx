@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const login = async (email, password) => {
+    console.log("Logging in with:", email, password);
     try {
       const response = await apiClient.post("/users/signin", {
         email,
@@ -18,6 +19,7 @@ export const AuthProvider = ({ children }) => {
       setUser(response.data.user);
       return response.data;
     } catch (error) {
+      console.error("Login error details:", error.response?.data); // Debug
       throw error.response?.data?.message || "Login failed";
     }
   };

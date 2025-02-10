@@ -10,8 +10,8 @@ const userSchema = new mongoose.Schema({
   googleId: {
     type: String,
     required: false,
-
     sparse: true,
+    default: null,
   },
   calendarIntegration: {
     syncEnabled: {
@@ -32,13 +32,6 @@ const userSchema = new mongoose.Schema({
   timezone: { type: String, default: "UTC" },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-});
-
-userSchema.pre("save", async function (next) {
-  if (this.isModified("password")) {
-    this.password = await bcrypt.hash(this.password, 10);
-  }
-  next();
 });
 
 const User = mongoose.model("User", userSchema);
