@@ -9,7 +9,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const login = async (email, password) => {
-    console.log("Logging in with:", email, password);
     try {
       const response = await apiClient.post("/users/signin", {
         email,
