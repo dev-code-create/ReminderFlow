@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema({
     sparse: true,
     default: null,
   },
+  role: { type: String, enum: ["admin", "member"], default: "member" },
   calendarIntegration: {
     syncEnabled: {
       type: Boolean,

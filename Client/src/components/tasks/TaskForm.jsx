@@ -35,16 +35,16 @@ const TaskForm = ({ isEdit = false, initialData = null }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 px-4">
+    <div className="h-[calc(100vh-64px)] bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-4 flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-2xl mx-auto"
+        className="w-full max-w-2xl"
       >
         <form
           onSubmit={handleSubmit}
-          className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 space-y-6"
+          className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 space-y-4"
         >
           <motion.h2
             initial={{ opacity: 0 }}
