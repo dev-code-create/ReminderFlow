@@ -4,6 +4,7 @@ import Dashboard from "./components/DashBoard";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
+import TaskForm from "./components/tasks/TaskForm";
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
@@ -24,6 +25,7 @@ const App = () => {
             </PrivateRoute>
           }
         />
+        <Route path="/create-task" element={<TaskForm />} />
         <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
     </AuthProvider>
