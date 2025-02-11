@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
 import TaskForm from "./components/tasks/TaskForm";
+import Navbar from "./components/common/Navbar";
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
@@ -14,6 +15,7 @@ const PrivateRoute = ({ children }) => {
 const App = () => {
   return (
     <AuthProvider>
+      <Navbar />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

@@ -35,7 +35,7 @@ const TaskForm = ({ isEdit = false, initialData = null }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-200 via-white to-green-200 h-64 w-full py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 px-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -44,13 +44,13 @@ const TaskForm = ({ isEdit = false, initialData = null }) => {
       >
         <form
           onSubmit={handleSubmit}
-          className="bg-white rounded-2xl shadow-xl p-8 space-y-6"
+          className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 space-y-6"
         >
           <motion.h2
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-3xl font-bold text-brand-dark text-center mb-8"
+            className="text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-500 to-pink-500 bg-clip-text text-transparent text-center mb-8"
           >
             {isEdit ? "Edit Task" : "Create New Task"}
           </motion.h2>
@@ -154,10 +154,10 @@ const TaskForm = ({ isEdit = false, initialData = null }) => {
             type="submit"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full py-4 bg-brand-primary text-white rounded-lg font-medium
-                     hover:bg-brand-secondary transition-colors duration-300
-                     focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary
-                     shadow-lg hover:shadow-xl transform transition-all"
+            className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-500 text-white rounded-lg font-medium
+                     hover:from-indigo-700 hover:to-purple-600 transition-all duration-300
+                     focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
+                     shadow-lg hover:shadow-xl transform"
           >
             {isEdit ? "Update Task" : "Create Task"}
           </motion.button>
