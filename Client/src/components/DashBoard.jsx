@@ -56,7 +56,7 @@ const Dashboard = () => {
           </motion.div>
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Action*/}
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold text-gray-800">Your Tasks</h2>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
