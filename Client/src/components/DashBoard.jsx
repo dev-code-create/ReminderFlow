@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import apiClient from "../services/api";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
@@ -13,19 +14,16 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Your Task</h1>
-      <ul>
-        {tasks.map((task) => {
-          <li key={task._id} className="mb-2 p-2 border rounded-md">
-            <h1 className="font-semibold">{task.title}</h1>
-            <p>{task.description}</p>
-            <p className="text-sm text-gray-500">
-              Due : {new Date(task.dueDate).toLocaleDateString()}
-            </p>
-          </li>;
-        })}
-      </ul>
+    <div className="container mx-auto p-4 flex items-center ">
+      <h1 className="text-2xl font-bold ">Your Task</h1>
+      <div className="ml-8">
+        <Link
+          to="/create-task"
+          className="inline-block p-2 px-3 bg-[#3B82F6] text-white rounded hover:bg-[#2563EB]"
+        >
+          Add Task
+        </Link>
+      </div>
     </div>
   );
 };
