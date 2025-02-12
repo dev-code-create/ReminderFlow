@@ -1,5 +1,5 @@
 import React from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Dashboard from "./components/DashBoard";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./components/auth/Login";
@@ -13,9 +13,13 @@ const PrivateRoute = ({ children }) => {
 };
 
 const App = () => {
+  const location = useLocation();
+  const authRoutes = ["/login", "/register", "/signup"];
+  const showNavbar = !authRoutes.includes(location.pathname);
+
   return (
     <AuthProvider>
-      <Navbar />
+      {showNavbar && <Navbar />}
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
