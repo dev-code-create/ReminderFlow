@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { motion } from "framer-motion";
-import { FaPlus, FaUserFriends, FaCog } from "react-icons/fa";
+import { FaPlus, FaUserFriends, FaCog, FaCalendarAlt } from "react-icons/fa";
 
 const Navbar = () => {
   const { user } = useAuth();
@@ -80,12 +80,16 @@ const Navbar = () => {
           )}
 
           {/* Calendar Sync Button */}
-          <Link
-            to="/calendar-sync"
-            className="px-4 py-2 bg-white text-[#3B82F6] rounded hover:bg-gray-100 transition-colors"
-          >
-            Calendar Sync
-          </Link>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link
+              to="/calendar-sync"
+              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-400 
+                         text-white rounded-lg hover:shadow-lg transition-all duration-300"
+            >
+              <FaCalendarAlt className="text-sm" />
+              <span>Calendar Sync</span>
+            </Link>
+          </motion.div>
 
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <button

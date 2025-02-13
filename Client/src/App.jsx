@@ -36,7 +36,7 @@ const App = () => {
         <Route path="/create-task" element={<TaskForm />} />
         <Route path="/edit-task/:taskId" element={<TaskForm isEdit={true} />} />
         <Route path="/create-team" element={<TeamManagement />} />
-        <Route path="/calender-sync" element={<CalenderSync />} />
+        <Route path="/calendar-sync" element={<CalenderSync />} />
         <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
     </AuthProvider>
