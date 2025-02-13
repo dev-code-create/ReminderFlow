@@ -49,7 +49,7 @@ const CalenderSync = () => {
         {/* Calendar Providers */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           {[
-            { name: "Google Calendar", icon: FaGoogle, color: "red" },
+            { name: "Google Calendar", icon: FaGoogle, color: "" },
             { name: "Microsoft Outlook", icon: FaMicrosoft, color: "blue" },
           ].map((provider) => (
             <motion.div
@@ -132,9 +132,9 @@ const CalenderSync = () => {
               </label>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-600">Sync Frequency</span>
+              <span className="text-gray-600 ">Sync Frequency</span>
               <select
-                className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg
+                className="px-8 py-2 bg-gray-50 border border-gray-200 rounded-lg
                                focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="15">Every 15 minutes</option>
