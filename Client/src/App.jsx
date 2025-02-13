@@ -6,6 +6,7 @@ import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
 import TaskForm from "./components/tasks/TaskForm";
 import Navbar from "./components/common/Navbar";
+import TeamManagement from "./components/TeamManagement";
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
@@ -33,6 +34,7 @@ const App = () => {
         />
         <Route path="/create-task" element={<TaskForm />} />
         <Route path="/edit-task/:taskId" element={<TaskForm isEdit={true} />} />
+        <Route path="/create-team" element={<TeamManagement />} />
         <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
     </AuthProvider>
