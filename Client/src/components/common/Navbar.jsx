@@ -79,6 +79,14 @@ const Navbar = () => {
             </motion.div>
           )}
 
+          {/* Calendar Sync Button */}
+          <Link
+            to="/calendar-sync"
+            className="px-4 py-2 bg-white text-[#3B82F6] rounded hover:bg-gray-100 transition-colors"
+          >
+            Calendar Sync
+          </Link>
+
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <button
               className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-200 
