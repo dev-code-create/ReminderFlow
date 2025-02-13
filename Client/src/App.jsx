@@ -32,6 +32,7 @@ const App = () => {
           }
         />
         <Route path="/create-task" element={<TaskForm />} />
+        <Route path="/edit-task/:taskId" element={<TaskForm isEdit={true} />} />
         <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
     </AuthProvider>
