@@ -92,14 +92,14 @@ const Navbar = () => {
           </motion.div>
 
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <button
+            <Link
+              to="/settings"
               className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-200 
                          text-gray-700 rounded-lg hover:bg-gray-50 hover:shadow-md transition-all duration-300"
-              onClick={() => alert("Settings clicked!")}
             >
               <FaCog className="text-sm" />
               <span>Settings</span>
-            </button>
+            </Link>
           </motion.div>
         </div>
       </div>

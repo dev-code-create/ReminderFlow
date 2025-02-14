@@ -8,6 +8,8 @@ import TaskForm from "./components/tasks/TaskForm";
 import Navbar from "./components/common/Navbar";
 import TeamManagement from "./components/TeamManagement";
 import CalenderSync from "./components/calender/CalenderSync";
+import Settings from "./components/Settings";
+
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
@@ -37,6 +39,7 @@ const App = () => {
         <Route path="/edit-task/:taskId" element={<TaskForm isEdit={true} />} />
         <Route path="/create-team" element={<TeamManagement />} />
         <Route path="/calendar-sync" element={<CalenderSync />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
     </AuthProvider>
