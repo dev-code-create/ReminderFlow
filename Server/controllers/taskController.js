@@ -1,6 +1,7 @@
 import Task from "../models/task.model.js";
 export const createTask = async (req, res) => {
   const { title, description, dueDate, priority, recurrence } = req.body;
+  console.log(req.body);
 
   try {
     const task = new Task({
@@ -11,6 +12,7 @@ export const createTask = async (req, res) => {
       creator: req.user.id,
       recurrence,
     });
+    console.log(task);
     await task.save();
     res.status(201).json(task);
   } catch (error) {
