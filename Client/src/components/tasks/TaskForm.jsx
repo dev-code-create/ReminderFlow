@@ -24,9 +24,9 @@ const TaskForm = ({ isEdit = false, initialData = null }) => {
     e.preventDefault();
     try {
       if (isEdit) {
-        await apiClient.put(`/api/tasks/${taskId}`, formData);
+        await apiClient.put(`/tasks/${taskId}`, formData);
       } else {
-        await apiClient.post("/api/tasks", formData);
+        await apiClient.post("/tasks/createTask", formData);
       }
       navigate("/dashboard");
     } catch (error) {
