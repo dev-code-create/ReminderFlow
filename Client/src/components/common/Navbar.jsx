@@ -66,7 +66,7 @@ const Navbar = () => {
             </Link>
           </motion.div>
 
-          {user?.role === "admin" && (
+          {user?.role === "member" && (
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link
                 to="/create-team"

@@ -26,6 +26,7 @@ const taskSchema = new mongoose.Schema({
       enum: ["none", "daily", "weekly", "monthly"],
       default: "none",
     },
+
     endDate: { type: Date },
   },
   reminders: [
