@@ -3,21 +3,93 @@ import Team from "../models/team.model.js";
 import User from "../models/user.model.js";
 
 export const createTeam = async (req, res) => {
-  const { name, description } = req.body;
-  const team = new Team({
-    name,
-    description,
-    owner: req.user.id,
-  });
-  await team.save();
-  res.status(201).json({ message: "Team created successfully", team });
+  try {
+    const { name, members } = req.body;
+    const creator = req.user.id;
+
+    const team = new Team({
+      name,
+      creator,
+      members: members.map((member) => ({
+        email: member.email,
+        role: member.role,
+        tasks: member.tasks,
+        status: "pending",
+      })),
+    });
+
+    await team.save();
+    res.status(201).json(team);
+  } catch (error) {
+    console.error("Team creation error:", error);
+    res.status(500).json({ message: error.message });
+  }
 };
 
-export const getTeam = async (req, res) => {
-  const teams = await Team.find({ owner: req.user.id }).populate(
-    "members.users"
-  );
-  res.json(teams);
+export const getTeams = async (req, res) => {
+  try {
+    const teams = await Team.find({ creator: req.user.id })
+      .populate("members.user", "firstName lastName email")
+      .populate("creator", "firstName lastName email");
+
+    res.json(teams);
+  } catch (error) {
+    console.error("Get teams error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateTeamMember = async (req, res) => {
+  try {
+    const { teamId, memberId } = req.params;
+    const { role, tasks } = req.body;
+
+    const team = await Team.findOneAndUpdate(
+      {
+        _id: teamId,
+        "members._id": memberId,
+      },
+      {
+        $set: {
+          "members.$.role": role,
+          "members.$.tasks": tasks,
+        },
+      },
+      { new: true }
+    );
+
+    if (!team) {
+      return res.status(404).json({ message: "Team or member not found" });
+    }
+
+    res.json(team);
+  } catch (error) {
+    console.error("Update team member error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const removeTeamMember = async (req, res) => {
+  try {
+    const { teamId, memberId } = req.params;
+
+    const team = await Team.findByIdAndUpdate(
+      teamId,
+      {
+        $pull: { members: { _id: memberId } },
+      },
+      { new: true }
+    );
+
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+
+    res.json(team);
+  } catch (error) {
+    console.error("Remove team member error:", error);
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const inviteMember = async (req, res) => {
@@ -49,7 +121,7 @@ export const deleteTeam = async (req, res) => {
     if (!team) return res.status(404).json({ message: "Team not found" });
 
     // Ensure the authenticated user is the owner of the team
-    if (!team.owner.equals(req.user.id)) {
+    if (!team.creator.equals(req.user.id)) {
       return res
         .status(403)
         .json({ message: "You are not authorized to delete this team" });

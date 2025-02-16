@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   FaBell,
@@ -26,6 +26,18 @@ const Settings = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await apiClient.get("/settings/get-settings");
+        setSettings(response.data);
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      }
+    };
+    fetchSettings();
+  }, []);
+
   const handleNotificationChange = (type) => {
     setSettings({
       ...settings,
@@ -39,7 +51,7 @@ const Settings = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      await apiClient.put("/users/settings", settings);
+      await apiClient.put("/settings/update", settings);
       setMessage({ type: "success", text: "Settings updated successfully!" });
     } catch (error) {
       setMessage({ type: "error", text: "Failed to update settings" });
