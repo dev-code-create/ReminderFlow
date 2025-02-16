@@ -31,6 +31,11 @@ const userSchema = new mongoose.Schema({
     push: { type: Boolean, default: true },
   },
   timezone: { type: String, default: "UTC" },
+  theme: {
+    type: String,
+    enum: ["light", "dark"],
+    default: "light",
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
