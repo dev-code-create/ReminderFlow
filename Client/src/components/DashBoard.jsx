@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { FaPlus, FaCalendar, FaBell, FaCheck } from "react-icons/fa";
 import TaskList from "./tasks/TaskList";
-import { FaPlus, FaCalendar, FaBell } from "react-icons/fa";
+import apiClient from "../services/api";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -10,6 +11,29 @@ const Dashboard = () => {
     completedTasks: 0,
     upcomingTasks: 0,
   });
+
+  useEffect(() => {
+    fetchTaskStats();
+  }, []);
+
+  const fetchTaskStats = async () => {
+    try {
+      const response = await apiClient.get("/tasks/getTask");
+      const tasks = response.data;
+
+      const now = new Date();
+
+      setStats({
+        totalTasks: tasks.length,
+        completedTasks: tasks.filter((task) => task.status === "completed")
+          .length,
+        upcomingTasks: tasks.filter((task) => new Date(task.dueDate) > now)
+          .length,
+      });
+    } catch (error) {
+      console.error("Error fetching task stats:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
@@ -35,7 +59,7 @@ const Dashboard = () => {
           >
             <div className="flex items-center justify-between">
               <h3 className="text-gray-500 text-sm">Completed</h3>
-              <FaCalendar className="text-green-500" />
+              <FaCheck className="text-green-500" />
             </div>
             <p className="text-2xl font-bold text-gray-800 mt-2">
               {stats.completedTasks}
@@ -56,7 +80,7 @@ const Dashboard = () => {
           </motion.div>
         </div>
 
-        {/* Quick Action*/}
+        {/* Quick Action */}
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold text-gray-800">Your Tasks</h2>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -72,7 +96,7 @@ const Dashboard = () => {
         </div>
 
         {/* Tasks List */}
-        <TaskList />
+        <TaskList onTaskUpdate={fetchTaskStats} />
       </div>
     </div>
   );
