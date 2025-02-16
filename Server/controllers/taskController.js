@@ -1,9 +1,8 @@
 import Task from "../models/task.model.js";
+
 export const createTask = async (req, res) => {
   const { title, description, dueDate, priority, recurrence } = req.body;
   const user = req.user;
-
-  console.log(req.body.id);
 
   try {
     const task = new Task({
@@ -14,7 +13,7 @@ export const createTask = async (req, res) => {
       creator: req.user.id,
       recurrence,
     });
-    console.log(task);
+
     await task.save();
 
     res.status(201).json(task);
@@ -36,25 +35,21 @@ export const getTasks = async (req, res) => {
 };
 
 export const deleteTask = async (req, res) => {
-  const { taskId } = req.params;
-
   try {
-    // Find the task
-    const task = await Task.findById(taskId);
-    if (!task) return res.status(404).json({ message: "Task not found" });
+    const { taskId } = req.params;
 
-    // Ensure the authenticated user is the creator of the task
-    if (!task.creator.equals(req.user.id)) {
-      return res
-        .status(403)
-        .json({ message: "You are not authorized to delete this task" });
+    // Add logging
+    console.log("Attempting to delete task:", taskId);
+
+    const task = await Task.findByIdAndDelete(taskId);
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
     }
 
-    // Delete the task
-    await task.remove();
-
-    res.json({ message: "Task deleted successfully" });
+    res.status(200).json({ message: "Task deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Delete task error:", error);
+    res.status(500).json({ message: error.message });
   }
 };
