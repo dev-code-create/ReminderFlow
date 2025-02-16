@@ -9,7 +9,7 @@ import { authMiddleware } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 router.post("/createTask", createTask);
-router.post("/getTask", getTasks);
+router.get("/getTask", getTasks);
 router.delete("/:taskId", authMiddleware, deleteTask);
 
 export default router;

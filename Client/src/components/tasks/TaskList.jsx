@@ -17,7 +17,7 @@ const TaskList = () => {
 
   const fetchTasks = async () => {
     try {
-      const response = await apiClient.get("/tasks");
+      const response = await apiClient.get("/tasks/getTask");
       setTasks(response.data);
     } catch (error) {
       console.error("Error fetching tasks:", error);
