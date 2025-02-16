@@ -1,13 +1,21 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FaEdit, FaTrash, FaClock, FaSearch, FaFilter } from "react-icons/fa";
+import {
+  FaEdit,
+  FaTrash,
+  FaClock,
+  FaSearch,
+  FaFilter,
+  FaCheck,
+  FaSpinner,
+} from "react-icons/fa";
 import apiClient from "../../services/api";
 
-const TaskList = () => {
+const TaskList = ({ onTaskUpdate }) => {
   const [tasks, setTasks] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filter, setFilter] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");
   const [sortBy, setSortBy] = useState("dueDate");
 
@@ -33,13 +41,22 @@ const TaskList = () => {
     }
   };
 
+  const updateTaskStatus = async (taskId, newStatus) => {
+    try {
+      await apiClient.put(`/tasks/${taskId}/status`, { status: newStatus });
+      fetchTasks();
+      if (onTaskUpdate) onTaskUpdate();
+    } catch (error) {
+      console.error("Error updating task status:", error);
+    }
+  };
+
   const filteredTasks = tasks
     .filter((task) => {
       const matchesSearch =
         task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         task.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus =
-        filterStatus === "all" || task.status === filterStatus;
+      const matchesStatus = filter === "all" || task.status === filter;
       const matchesPriority =
         filterPriority === "all" || task.priority === filterPriority;
       return matchesSearch && matchesStatus && matchesPriority;
@@ -58,6 +75,32 @@ const TaskList = () => {
       }
     });
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "completed":
+        return "text-green-500";
+      case "in-progress":
+        return "text-blue-500";
+      case "pending":
+        return "text-yellow-500";
+      default:
+        return "text-gray-500";
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "completed":
+        return <FaCheck />;
+      case "in-progress":
+        return <FaSpinner className="animate-spin" />;
+      case "pending":
+        return <FaClock />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Search and Filter Section */}
@@ -74,8 +117,8 @@ const TaskList = () => {
             />
           </div>
           <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
             className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
           >
             <option value="all">All Status</option>
@@ -103,6 +146,23 @@ const TaskList = () => {
             <option value="status">Sort by Status</option>
           </select>
         </div>
+      </div>
+
+      {/* Status Filter */}
+      <div className="flex gap-4 mb-6">
+        {["all", "pending", "in-progress", "completed"].map((status) => (
+          <button
+            key={status}
+            onClick={() => setFilter(status)}
+            className={`px-4 py-2 rounded-lg transition-all duration-300 ${
+              filter === status
+                ? "bg-indigo-600 text-white"
+                : "bg-white text-gray-600 hover:bg-indigo-50"
+            }`}
+          >
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </button>
+        ))}
       </div>
 
       {/* Tasks Grid */}
@@ -140,24 +200,32 @@ const TaskList = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 mt-4">
-              <div className="flex items-center text-gray-500">
-                <FaClock className="mr-2" />
-                <span className="text-sm">
+            <div className="flex items-center justify-between mt-4">
+              <div className="flex items-center space-x-4">
+                <span
+                  className={`flex items-center gap-2 ${getStatusColor(
+                    task.status
+                  )}`}
+                >
+                  {getStatusIcon(task.status)}
+                  {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                </span>
+                <span className="text-gray-500">
                   Due: {new Date(task.dueDate).toLocaleDateString()}
                 </span>
               </div>
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  task.priority === "high"
-                    ? "bg-red-100 text-red-800"
-                    : task.priority === "medium"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : "bg-green-100 text-green-800"
-                }`}
+              <select
+                value={task.status}
+                onChange={(e) => updateTaskStatus(task._id, e.target.value)}
+                className={`ml-4 px-3 py-1 rounded-lg border ${getStatusColor(
+                  task.status
+                )} 
+                           focus:outline-none focus:ring-2 focus:ring-indigo-500`}
               >
-                {task.priority}
-              </span>
+                <option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
             </div>
           </motion.div>
         ))}
