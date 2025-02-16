@@ -49,7 +49,7 @@ const TeamManagement = () => {
         return;
       }
 
-      await apiClient.post("/teams", { name: teamName, members });
+      await apiClient.post("/teams/createTeam", { name: teamName, members });
       alert("Team created successfully");
       setTeamName("");
       setMembers([]);
