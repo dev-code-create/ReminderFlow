@@ -70,11 +70,13 @@ const Navbar = () => {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link
                 to="/create-team"
-                className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-200 
-                           text-gray-700 rounded-lg hover:bg-gray-50 hover:shadow-md transition-all duration-300"
+                className="flex items-center space-x-2 px-4 py-2 
+                           bg-gradient-to-r from-indigo-600 to-purple-500 
+                           text-white rounded-lg hover:shadow-lg 
+                           transition-all duration-300"
               >
                 <FaUserFriends className="text-sm" />
-                <span>Team</span>
+                <span>Manage Team</span>
               </Link>
             </motion.div>
           )}
