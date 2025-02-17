@@ -8,6 +8,7 @@ import {
   FaCog,
 } from "react-icons/fa";
 import apiClient from "../../services/api";
+import { toast } from "react-hot-toast";
 
 const CalendarSync = () => {
   const [selectedProvider, setSelectedProvider] = useState(null);
@@ -16,6 +17,22 @@ const CalendarSync = () => {
     enabled: false,
     lastSync: null,
   });
+
+  const fetchSyncStatus = async () => {
+    try {
+      const response = await apiClient.get("/calendar/status");
+      if (response.data.integration) {
+        setSyncStatus({
+          enabled: response.data.integration.syncEnabled,
+          lastSync: response.data.integration.lastSyncAt,
+        });
+        setSelectedProvider(response.data.integration.provider);
+      }
+    } catch (error) {
+      console.error("Failed to fetch sync status:", error);
+      toast.error("Failed to fetch sync status");
+    }
+  };
 
   const handleSync = async () => {
     if (!selectedProvider) return;
@@ -75,22 +92,61 @@ const CalendarSync = () => {
 
   // Add useEffect to fetch initial sync status
   useEffect(() => {
-    const fetchSyncStatus = async () => {
-      try {
-        const response = await apiClient.get("/calendar/status");
-        if (response.data.integration) {
-          setSyncStatus({
-            enabled: response.data.integration.syncEnabled,
-            lastSync: response.data.integration.lastSyncAt,
-          });
-          setSelectedProvider(response.data.integration.provider);
-        }
-      } catch (error) {
-        console.error("Failed to fetch sync status:", error);
-      }
-    };
-
     fetchSyncStatus();
+  }, []);
+
+  useEffect(() => {
+    // Check for success/error in URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get("success");
+    const error = urlParams.get("error");
+    const errorMessage = urlParams.get("message");
+
+    if (success === "true") {
+      // Show success message
+      toast.success("Calendar connected successfully!");
+    } else if (error === "true") {
+      // Show error message
+      toast.error(errorMessage || "Failed to connect calendar");
+    }
+
+    // Clear URL params
+    if (success || error) {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Check for tokens in URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const accessToken = urlParams.get("access_token");
+    const refreshToken = urlParams.get("refresh_token");
+    const expiresIn = urlParams.get("expires_in");
+
+    if (accessToken && refreshToken) {
+      // Save the tokens by calling your backend
+      const saveTokens = async () => {
+        try {
+          await apiClient.post("/calendar/connect", {
+            provider: "google",
+            accessToken,
+            refreshToken,
+            expiresAt: new Date(Date.now() + parseInt(expiresIn)),
+          });
+
+          toast.success("Calendar connected successfully!");
+          // Fetch updated sync status
+          fetchSyncStatus();
+        } catch (error) {
+          console.error("Failed to save tokens:", error);
+          toast.error("Failed to connect calendar");
+        }
+      };
+
+      saveTokens();
+      // Clear URL params
+      window.history.replaceState({}, "", window.location.pathname);
+    }
   }, []);
 
   return (

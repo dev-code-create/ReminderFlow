@@ -33,22 +33,56 @@ const syncTaskToCalendar = async (userId, task) => {
 // Sync all tasks
 const syncAllTasks = async (userId) => {
   try {
-    // Convert string ID to ObjectId if needed
+    console.log("Starting syncAllTasks for user:", userId);
+
+    const integration = await CalendarIntegration.findOne({
+      user: userId,
+      provider: "google",
+      syncEnabled: true,
+    });
+
+    if (!integration) {
+      console.log("No active Google Calendar integration found");
+      return;
+    }
+    console.log("Found integration:", integration);
+
+    // Get all pending and in-progress tasks
     const tasks = await Task.find({
       creator: userId,
+      dueDate: { $exists: true, $ne: null }, // Only sync tasks with due dates
     }).exec();
 
-    if (!tasks.length) {
-      console.log("No tasks found for user:", userId);
+    console.log(`Found ${tasks.length} tasks to sync:`, tasks);
+
+    if (tasks.length === 0) {
+      console.log("No tasks found with due dates");
       return;
     }
 
     for (const task of tasks) {
-      await syncTaskToCalendar(userId, task);
+      try {
+        console.log("Attempting to sync task:", {
+          id: task._id,
+          title: task.title,
+          dueDate: task.dueDate,
+          status: task.status,
+        });
+        await syncToGoogleCalendar(integration, task);
+      } catch (error) {
+        console.error(`Failed to sync task ${task.title}:`, error);
+        continue;
+      }
     }
+
+    // Update last sync time
+    await CalendarIntegration.findByIdAndUpdate(integration._id, {
+      lastSyncAt: new Date(),
+    });
+    console.log("Sync completed successfully");
   } catch (error) {
     console.error("Sync all tasks error:", error);
-    throw error; // Propagate error to controller
+    throw error;
   }
 };
 
@@ -74,37 +108,72 @@ const pullFromCalendar = async (userId) => {
 
 // Google Calendar Functions
 async function syncToGoogleCalendar(integration, task) {
-  oauth2Client.setCredentials({
-    access_token: integration.accessToken,
-    refresh_token: integration.refreshToken,
-  });
+  try {
+    console.log("Starting Google Calendar sync for task:", task.title);
 
-  const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+    oauth2Client.setCredentials({
+      access_token: integration.accessToken,
+      refresh_token: integration.refreshToken,
+    });
 
-  const event = {
-    summary: task.title,
-    description: task.description,
-    start: {
-      dateTime: task.dueDate,
-      timeZone: "UTC",
-    },
-    end: {
-      dateTime: new Date(new Date(task.dueDate).getTime() + 60 * 60000),
-      timeZone: "UTC",
-    },
-    reminders: {
-      useDefault: false,
-      overrides: [
-        { method: "email", minutes: 24 * 60 },
-        { method: "popup", minutes: 30 },
-      ],
-    },
-  };
+    const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-  await calendar.events.insert({
-    calendarId: "primary",
-    resource: event,
-  });
+    // Format the task date properly
+    const taskDate = new Date(task.dueDate);
+    const endDate = new Date(taskDate.getTime() + 60 * 60 * 1000); // 1 hour duration
+
+    console.log("Task dates:", {
+      start: taskDate,
+      end: endDate,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    });
+
+    const event = {
+      summary: task.title,
+      description: task.description || "No description provided",
+      start: {
+        dateTime: taskDate.toISOString(),
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+      end: {
+        dateTime: endDate.toISOString(),
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+      reminders: {
+        useDefault: true, // Use default reminders instead of custom
+      },
+      // Make the event visible
+      visibility: "public",
+      transparency: "opaque",
+      // Add metadata
+      extendedProperties: {
+        private: {
+          taskId: task._id.toString(),
+          source: "ReminderFlow",
+        },
+      },
+    };
+
+    console.log("Creating event with data:", event);
+
+    try {
+      const result = await calendar.events.insert({
+        calendarId: "primary",
+        resource: event,
+      });
+      console.log("Event created successfully:", result.data);
+    } catch (apiError) {
+      console.error("Google Calendar API Error:", {
+        code: apiError.code,
+        message: apiError.message,
+        errors: apiError.errors,
+      });
+      throw apiError;
+    }
+  } catch (error) {
+    console.error("Error in syncToGoogleCalendar:", error);
+    throw error;
+  }
 }
 
 // Outlook Calendar Functions

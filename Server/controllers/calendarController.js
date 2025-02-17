@@ -1,6 +1,7 @@
 import CalendarIntegration from "../models/calendarIntegration.model.js";
 import { syncAllTasks } from "../services/calendarSync.js";
 import { google } from "googleapis";
+import Task from "../models/task.model.js";
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -10,24 +11,43 @@ const oauth2Client = new google.auth.OAuth2(
 
 export const connectCalendar = async (req, res) => {
   try {
-    const { provider } = req.body;
+    const { provider, accessToken, refreshToken, expiresAt } = req.body;
     const userId = req.user.id;
+
+    console.log("Connecting calendar for user:", userId);
 
     const calendarIntegration = await CalendarIntegration.findOneAndUpdate(
       { user: userId, provider: provider.toLowerCase() },
       {
+        accessToken,
+        refreshToken,
+        expiresAt: new Date(expiresAt),
         syncEnabled: true,
         lastSyncAt: new Date(),
       },
       { upsert: true, new: true }
     );
 
-    // After connecting, sync all tasks
-    await syncAllTasks(userId);
+    // Verify tasks exist
+    const tasks = await Task.find({
+      creator: userId,
+      dueDate: { $exists: true, $ne: null },
+    });
+    console.log("Found tasks for sync:", tasks);
+
+    // Immediately sync all tasks after connecting
+    try {
+      await syncAllTasks(userId);
+      console.log("Tasks synced successfully after connection");
+    } catch (syncError) {
+      console.error("Initial sync failed:", syncError);
+      console.error("Sync error details:", syncError.stack);
+    }
 
     res.status(200).json({
       message: "Calendar connected successfully",
       integration: calendarIntegration,
+      tasksFound: tasks.length,
     });
   } catch (error) {
     console.error("Calendar connection error:", error);
@@ -86,35 +106,30 @@ export const initiateGoogleAuth = async (req, res) => {
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: "offline",
     scope: [
-      "https://www.googleapis.com/auth/calendar.events", // Just for events
-      "https://www.googleapis.com/auth/calendar.readonly", // Read-only access
+      "https://www.googleapis.com/auth/calendar.events",
+      "https://www.googleapis.com/auth/calendar.readonly",
     ],
     prompt: "consent",
+    state: req.user.id,
   });
   res.json({ url: authUrl });
 };
 
 export const handleGoogleCallback = async (req, res) => {
-  const { code } = req.query;
+  const { code, state } = req.query;
   try {
     const { tokens } = await oauth2Client.getToken(code);
 
-    await CalendarIntegration.findOneAndUpdate(
-      { user: req.user.id, provider: "google" },
-      {
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
-        expiresAt: new Date(Date.now() + (tokens.expiry_date || 3600000)),
-        syncEnabled: true,
-      },
-      { upsert: true, new: true }
+    // Store tokens temporarily in session or use state parameter to identify user
+    // For now, we'll redirect with the tokens as query parameters (not recommended for production)
+    res.redirect(
+      `${process.env.FRONTEND_URL}/calendar-sync?` +
+        `access_token=${tokens.access_token}&` +
+        `refresh_token=${tokens.refresh_token}&` +
+        `expires_in=${tokens.expiry_date}`
     );
-
-    // Redirect with success
-    res.redirect(`${process.env.FRONTEND_URL}/calendar-sync?success=true`);
   } catch (error) {
     console.error("Google callback error:", error);
-    // Redirect with error details
     res.redirect(
       `${
         process.env.FRONTEND_URL

@@ -23,14 +23,18 @@ const TaskForm = ({ isEdit = false, initialData = null }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const taskData = {
+        ...formData,
+        dueDate: new Date(formData.dueDate).toISOString(),
+      };
       if (isEdit) {
-        await apiClient.put(`/tasks/${taskId}`, formData);
+        await apiClient.put(`/tasks/${taskId}`, taskData);
       } else {
-        await apiClient.post("/tasks/createTask", formData);
+        await apiClient.post("/tasks/createTask", taskData);
       }
       navigate("/dashboard");
     } catch (error) {
-      console.error("❌ Error creating task:", error);
+      console.error("Task submission error:", error);
     }
   };
 

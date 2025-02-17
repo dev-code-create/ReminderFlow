@@ -7,9 +7,9 @@ import Register from "./components/auth/Register";
 import TaskForm from "./components/tasks/TaskForm";
 import Navbar from "./components/common/Navbar";
 import TeamManagement from "./components/TeamManagement";
-
 import Settings from "./components/Settings";
 import CalendarSync from "./components/calendar/CalenderSync";
+import { Toaster } from "react-hot-toast";
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -23,27 +23,33 @@ const App = () => {
   const showNavbar = !authRoutes.includes(location.pathname);
 
   return (
-    <AuthProvider>
-      {showNavbar && <Navbar />}
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route path="/create-task" element={<TaskForm />} />
-        <Route path="/edit-task/:taskId" element={<TaskForm isEdit={true} />} />
-        <Route path="/create-team" element={<TeamManagement />} />
-        <Route path="/calendar-sync" element={<CalendarSync />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="*" element={<Navigate to="/dashboard" />} />
-      </Routes>
-    </AuthProvider>
+    <>
+      <Toaster position="top-right" />
+      <AuthProvider>
+        {showNavbar && <Navbar />}
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route path="/create-task" element={<TaskForm />} />
+          <Route
+            path="/edit-task/:taskId"
+            element={<TaskForm isEdit={true} />}
+          />
+          <Route path="/create-team" element={<TeamManagement />} />
+          <Route path="/calendar-sync" element={<CalendarSync />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<Navigate to="/dashboard" />} />
+        </Routes>
+      </AuthProvider>
+    </>
   );
 };
 
