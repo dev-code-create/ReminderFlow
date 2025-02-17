@@ -124,8 +124,7 @@ const TeamManagement = () => {
 
               <AnimatePresence>
                 {showAddMember && (
-                  <motion.form
-                    onSubmit={handleAddMember}
+                  <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
@@ -172,7 +171,7 @@ const TeamManagement = () => {
                           placeholder="Enter tasks"
                         />
                         <motion.button
-                          type="submit"
+                          onClick={handleAddMember}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-500 
@@ -182,7 +181,7 @@ const TeamManagement = () => {
                         </motion.button>
                       </div>
                     </div>
-                  </motion.form>
+                  </motion.div>
                 )}
               </AnimatePresence>
 
