@@ -14,8 +14,6 @@ export const connectCalendar = async (req, res) => {
     const { provider, accessToken, refreshToken, expiresAt } = req.body;
     const userId = req.user.id;
 
-    console.log("Connecting calendar for user:", userId);
-
     const calendarIntegration = await CalendarIntegration.findOneAndUpdate(
       { user: userId, provider: provider.toLowerCase() },
       {

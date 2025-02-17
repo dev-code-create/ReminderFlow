@@ -33,8 +33,6 @@ const syncTaskToCalendar = async (userId, task) => {
 // Sync all tasks
 const syncAllTasks = async (userId) => {
   try {
-    console.log("Starting syncAllTasks for user:", userId);
-
     const integration = await CalendarIntegration.findOne({
       user: userId,
       provider: "google",
