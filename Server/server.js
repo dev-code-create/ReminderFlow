@@ -7,7 +7,7 @@ import taskRoutes from "./routes/taskRoutes.js";
 import { authMiddleware } from "./middleware/authMiddleware.js";
 import "./services/cronJobs.js";
 import { scheduleRecurringTask } from "./services/recurrenceTask.js";
-import calenderRoutes from "./routes/calenderRoutes.js";
+import calendarRoutes from "./routes/calendarRoutes.js";
 import calendarOauth from "./routes/calendarOauth.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
 import teamRoutes from "./routes/teamRoutes.js";
@@ -27,7 +27,7 @@ app.use(express.json());
 
 app.use("/api/users", authRoutes);
 app.use("/api/tasks", authMiddleware, taskRoutes);
-app.use("/api/calender", calenderRoutes);
+app.use("/api/calendar", calendarRoutes);
 
 app.use("/api/calendarAuth", calendarOauth);
 app.use("/api/settings", settingsRoutes);

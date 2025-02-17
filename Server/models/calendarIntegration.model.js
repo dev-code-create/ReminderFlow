@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const calenderIntegrationSchema = new mongoose.Schema({
+const calendarIntegrationSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   provider: {
     type: String,
@@ -34,9 +34,9 @@ const calenderIntegrationSchema = new mongoose.Schema({
   },
 });
 
-const CalenderIntegration = mongoose.model(
-  "CalenderIntegration",
-  calenderIntegrationSchema
+const CalendarIntegration = mongoose.model(
+  "CalendarIntegration",
+  calendarIntegrationSchema
 );
 
-export default CalenderIntegration;
+export default CalendarIntegration;

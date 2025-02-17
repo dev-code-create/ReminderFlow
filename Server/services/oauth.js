@@ -1,7 +1,7 @@
 import passport from "passport";
 import GoogleStrategy from "passport-google-oauth20";
 import User from "../models/user.model.js";
-import CalenderIntegration from "../models/calenderIntegration.model.js";
+import calendarIntegration from "../models/calendarIntegration.model.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -19,14 +19,14 @@ passport.use(
           return done(null, false, { message: "User not found" });
         }
 
-        const calenderIntegration = new CalenderIntegration({
+        const calendarIntegration = new calendarIntegration({
           user: user._id,
           provider: "google",
           accessToken,
           refreshToken,
           expiresAt: new Date(Date.now() + 3600 * 1000),
         });
-        await calenderIntegration.save();
+        await calendarIntegration.save();
         return done(null, user);
       } catch (error) {
         return done(error, false);
