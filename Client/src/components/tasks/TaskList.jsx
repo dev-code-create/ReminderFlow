@@ -210,6 +210,7 @@ const TaskList = ({ onTaskUpdate }) => {
                   {getStatusIcon(task.status)}
                   {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
                 </span>
+                <span className="text-gray-500">Due Time: {task.dueTime}</span>
                 <span className="text-gray-500">
                   Due: {new Date(task.dueDate).toLocaleDateString()}
                 </span>

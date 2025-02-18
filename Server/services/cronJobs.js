@@ -13,6 +13,7 @@ cron.schedule("* * * * *", async () => {
     const now = new Date();
     const tasks = await Task.find({
       dueDate: { $lte: now },
+      dueTime: { $lte: now },
       status: { $ne: "completed" },
       reminderSent: { $ne: true },
     }).populate("creator");

@@ -38,6 +38,7 @@ const connectCalendar = async (req, res) => {
     const tasks = await Task.find({
       creator: userId,
       dueDate: { $exists: true, $ne: null },
+      dueTime: { $exists: true, $ne: null },
     });
 
     // Immediately sync all tasks after connecting

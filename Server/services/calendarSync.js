@@ -46,6 +46,7 @@ const syncAllTasks = async (userId) => {
     const tasks = await Task.find({
       creator: userId,
       dueDate: { $exists: true, $ne: null }, // Only sync tasks with due dates
+      dueTime: { $exists: true, $ne: null }, // Only sync tasks with due times
     }).exec();
 
     if (tasks.length === 0) {
@@ -59,6 +60,7 @@ const syncAllTasks = async (userId) => {
           id: task._id,
           title: task.title,
           dueDate: task.dueDate,
+          dueTime: task.dueTime,
           status: task.status,
         });
         await syncToGoogleCalendar(integration, task);
@@ -117,7 +119,10 @@ async function syncToGoogleCalendar(integration, task) {
 
     // Format the task date properly
     const taskDate = new Date(task.dueDate);
-    const endDate = new Date(taskDate.getTime() + 60 * 60 * 1000); // 1 hour duration
+    const taskTime = new Date(task.dueTime);
+    const endDate = new Date(
+      taskDate.getTime() + taskTime.getTime() + 60 * 60 * 1000
+    ); // 1 hour duration
 
     const event = {
       summary: task.title,
@@ -212,6 +217,7 @@ async function pullFromGoogleCalendar(userId) {
             title: event.summary || "Untitled Event",
             description: event.description || "",
             dueDate: new Date(event.start.dateTime || event.start.date),
+            dueTime: new Date(event.start.dateTime || event.start.date),
             creator: userId,
             status: "pending",
             calendarEventId: event.id,

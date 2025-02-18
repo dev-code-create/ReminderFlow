@@ -8,6 +8,7 @@ const TaskForm = ({ isEdit = false, initialData = null }) => {
     title: initialData?.title || "",
     description: initialData?.description || "",
     dueDate: initialData?.dueDate || "",
+    dueTime: initialData?.dueTime || "",
     priority: initialData?.priority || "medium",
     recurrence: initialData?.recurrence || "none",
   });
@@ -26,6 +27,7 @@ const TaskForm = ({ isEdit = false, initialData = null }) => {
       const taskData = {
         ...formData,
         dueDate: new Date(formData.dueDate).toISOString(),
+        dueTime: formData.dueTime,
       };
       if (isEdit) {
         await apiClient.put(`/tasks/${taskId}`, taskData);
@@ -79,6 +81,22 @@ const TaskForm = ({ isEdit = false, initialData = null }) => {
                           focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent
                           transition-all duration-300 ease-in-out"
                 placeholder="Enter task title"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Due Time
+              </label>
+              <input
+                type="time"
+                name="dueTime"
+                value={formData.dueTime}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg
+                            focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent
+                            transition-all duration-300 ease-in-out"
               />
             </div>
 

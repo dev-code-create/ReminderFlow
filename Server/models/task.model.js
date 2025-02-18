@@ -10,6 +10,7 @@ const taskSchema = new mongoose.Schema({
   },
   assignees: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   dueDate: { type: Date, required: true },
+  dueTime: { type: Date, required: true },
   priority: {
     type: String,
     enum: ["low", "medium", "high"],

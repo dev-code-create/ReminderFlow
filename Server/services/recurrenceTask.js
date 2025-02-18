@@ -10,6 +10,7 @@ export const scheduleRecurringTask = () => {
       "recurrence.type": { $ne: "none" },
       "recurrence.endDate": { $gte: now },
       dueDate: { $lte: now },
+      dueTime: { $lte: now },
     });
     for (const task of tasks) {
       const creator = await User.findById(task.creator);
@@ -23,10 +24,13 @@ export const scheduleRecurringTask = () => {
 
       if (task.recurrence.type === "daily") {
         task.dueDate.setDate(task.dueDate.getDate() + 1);
+        task.dueTime.setHours(task.dueTime.getHours() + 24);
       } else if (task.recurrence.type === "weekly") {
-        task.dueDate.setData(task.dueDate.getDate() + 7);
+        task.dueDate.setDate(task.dueDate.getDate() + 7);
+        task.dueTime.setHours(task.dueTime.getHours() + 168);
       } else if (task.recurrence.type === "monthly") {
         task.dueDate.setMonth(task.dueDate.getMonth() + 1);
+        task.dueTime.setHours(task.dueTime.getHours() + 720);
       }
 
       await task.save();

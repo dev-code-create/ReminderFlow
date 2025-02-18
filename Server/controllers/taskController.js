@@ -1,7 +1,8 @@
 import Task from "../models/task.model.js";
 
 export const createTask = async (req, res) => {
-  const { title, description, dueDate, priority, recurrence } = req.body;
+  const { title, description, dueDate, dueTime, priority, recurrence } =
+    req.body;
   const user = req.user;
 
   try {
@@ -9,6 +10,7 @@ export const createTask = async (req, res) => {
       title,
       description,
       dueDate,
+      dueTime,
       priority,
       creator: req.user.id,
       recurrence,
@@ -18,7 +20,8 @@ export const createTask = async (req, res) => {
 
     res.status(201).json(task);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Error creating task:", error.message, error.stack, error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
