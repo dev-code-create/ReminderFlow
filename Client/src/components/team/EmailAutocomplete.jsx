@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import apiClient from "../../services/api";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -7,6 +7,7 @@ const EmailAutocomplete = ({ onSelect, excludeEmails = [] }) => {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -34,12 +35,33 @@ const EmailAutocomplete = ({ onSelect, excludeEmails = [] }) => {
     return () => clearTimeout(debounceTimer);
   }, [query, excludeEmails]);
 
+  // Handle clicking outside of the component
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (inputRef.current && !inputRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelect = (email) => {
+    setQuery(email); // Set the input value to the selected email
+    onSelect(email);
+    setShowSuggestions(false);
+  };
+
   return (
-    <div className="relative">
+    <div className="relative" ref={inputRef}>
       <input
         type="email"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setShowSuggestions(true);
+        }}
         onFocus={() => setShowSuggestions(true)}
         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
         placeholder="Enter email address"
@@ -60,11 +82,7 @@ const EmailAutocomplete = ({ onSelect, excludeEmails = [] }) => {
                 <div
                   key={user._id}
                   className="px-4 py-2 hover:bg-gray-50 cursor-pointer"
-                  onClick={() => {
-                    onSelect(user.email);
-                    setQuery("");
-                    setShowSuggestions(false);
-                  }}
+                  onClick={() => handleSelect(user.email)}
                 >
                   <div className="font-medium text-gray-800">{user.email}</div>
                   {user.firstName && user.lastName && (
