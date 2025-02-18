@@ -4,7 +4,7 @@ const calendarIntegrationSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   provider: {
     type: String,
-    enum: ["google", "outlook", "apple"],
+    enum: ["google", "outlook"],
     required: true,
   },
   accessToken: {

@@ -5,6 +5,7 @@ import CalendarIntegration from "../models/calendarIntegration.model.js";
 import { sendEmail } from "./email.js";
 import { sendPushNotification } from "./push.js";
 import { syncTaskToCalendar, pullFromCalendar } from "./calendarSync.js";
+import google from "googleapis";
 
 // Run every minute to check for due tasks
 cron.schedule("* * * * *", async () => {
@@ -90,27 +91,40 @@ cron.schedule("0 0 1 * *", async () => {
   }
 });
 
-// Token refresh check daily
+// Update the token refresh cron job with proper refresh logic
 cron.schedule("0 0 * * *", async () => {
   try {
     const integrations = await CalendarIntegration.find({
-      expiresAt: { $lt: new Date(Date.now() + 24 * 60 * 60 * 1000) }, // Expires in next 24 hours
+      expiresAt: { $lt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
     }).populate("user");
 
     for (const integration of integrations) {
       try {
-        // Implement token refresh logic here based on provider
-        if (integration.provider === "google") {
-          // Refresh Google token
-        } else if (integration.provider === "outlook") {
-          // Refresh Outlook token
+        if (integration.provider === "google" && integration.refreshToken) {
+          // Refresh Google token using the refresh token
+          const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            `${process.env.BACKEND_URL}/api/calendar/google/callback`
+          );
+
+          oauth2Client.setCredentials({
+            refresh_token: integration.refreshToken,
+          });
+
+          const { credentials } = await oauth2Client.refreshAccessToken();
+
+          integration.accessToken = credentials.access_token;
+          integration.expiresAt = new Date(
+            Date.now() + credentials.expiry_date
+          );
+          await integration.save();
         }
       } catch (refreshError) {
         console.error(
           `Token refresh error for user ${integration.user._id}:`,
           refreshError
         );
-        // Optionally disable sync if refresh fails
         integration.syncEnabled = false;
         await integration.save();
       }

@@ -31,7 +31,6 @@ export const connectCalendar = async (req, res) => {
       creator: userId,
       dueDate: { $exists: true, $ne: null },
     });
-    console.log("Found tasks for sync:", tasks);
 
     // Immediately sync all tasks after connecting
     try {

@@ -43,15 +43,12 @@ const syncAllTasks = async (userId) => {
       console.log("No active Google Calendar integration found");
       return;
     }
-    console.log("Found integration:", integration);
 
     // Get all pending and in-progress tasks
     const tasks = await Task.find({
       creator: userId,
       dueDate: { $exists: true, $ne: null }, // Only sync tasks with due dates
     }).exec();
-
-    console.log(`Found ${tasks.length} tasks to sync:`, tasks);
 
     if (tasks.length === 0) {
       console.log("No tasks found with due dates");
@@ -107,8 +104,6 @@ const pullFromCalendar = async (userId) => {
 // Google Calendar Functions
 async function syncToGoogleCalendar(integration, task) {
   try {
-    console.log("Starting Google Calendar sync for task:", task.title);
-
     oauth2Client.setCredentials({
       access_token: integration.accessToken,
       refresh_token: integration.refreshToken,
@@ -119,12 +114,6 @@ async function syncToGoogleCalendar(integration, task) {
     // Format the task date properly
     const taskDate = new Date(task.dueDate);
     const endDate = new Date(taskDate.getTime() + 60 * 60 * 1000); // 1 hour duration
-
-    console.log("Task dates:", {
-      start: taskDate,
-      end: endDate,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    });
 
     const event = {
       summary: task.title,
@@ -151,8 +140,6 @@ async function syncToGoogleCalendar(integration, task) {
         },
       },
     };
-
-    console.log("Creating event with data:", event);
 
     try {
       const result = await calendar.events.insert({
