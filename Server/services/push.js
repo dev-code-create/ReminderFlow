@@ -8,10 +8,20 @@ admin.initializeApp({
 });
 
 export const sendPushNotification = async (token, title, body) => {
-  const message = {
-    token,
-    notification: { title, body },
-  };
+  try {
+    const message = {
+      notification: {
+        title: title,
+        body: body,
+      },
+      token: token,
+    };
 
-  await admin.messaging().send(message);
+    const response = await admin.messaging().send(message);
+    console.log("Successfully sent notification:", response);
+    return response;
+  } catch (error) {
+    console.error("Error sending notification:", error);
+    throw error;
+  }
 };

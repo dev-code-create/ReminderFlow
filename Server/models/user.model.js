@@ -38,6 +38,10 @@ const userSchema = new mongoose.Schema({
   },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+  fcmToken: {
+    type: String,
+    sparse: true, // Allows null values
+  },
 });
 
 const User = mongoose.model("User", userSchema);

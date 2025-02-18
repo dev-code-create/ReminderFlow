@@ -1,42 +1,94 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import apiClient from "../../services/api";
 import { motion } from "framer-motion";
+import { toast } from "react-hot-toast";
+import { format, parse } from "date-fns";
 
 const TaskForm = ({ isEdit = false, initialData = null }) => {
-  const [formData, setFormData] = useState({
-    title: initialData?.title || "",
-    description: initialData?.description || "",
-    dueDate: initialData?.dueDate || "",
-    dueTime: initialData?.dueTime || "",
-    priority: initialData?.priority || "medium",
-    recurrence: initialData?.recurrence || "none",
-  });
-
   const navigate = useNavigate();
   const { taskId } = useParams();
 
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    dueDate: "",
+    dueTime: "",
+    priority: "medium",
+    recurrence: "none",
+    status: "pending",
+  });
+
+  // Add useEffect to load initial data
+  useEffect(() => {
+    const loadTask = async () => {
+      if (taskId) {
+        try {
+          const response = await apiClient.get(`/tasks/${taskId}`);
+          const task = response.data;
+
+          // Format the date for the date input (YYYY-MM-DD)
+          const formattedDate = task.dueDate
+            ? format(new Date(task.dueDate), "yyyy-MM-dd")
+            : "";
+
+          // Format the time for the time input (HH:mm)
+          const formattedTime = task.dueTime
+            ? format(parse(task.dueTime, "h:mm a", new Date()), "HH:mm")
+            : "";
+
+          setFormData({
+            title: task.title,
+            description: task.description || "",
+            dueDate: formattedDate,
+            dueTime: formattedTime,
+            priority: task.priority || "medium",
+            recurrence: task.recurrence || "none",
+            status: task.status || "pending",
+          });
+        } catch (error) {
+          console.error("Failed to fetch task:", error);
+          toast.error("Failed to load task data");
+        }
+      }
+    };
+
+    loadTask();
+  }, [taskId]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const timeDate = formData.dueTime
+        ? parse(formData.dueTime, "HH:mm", new Date())
+        : null;
+
       const taskData = {
         ...formData,
-        dueDate: new Date(formData.dueDate).toISOString(),
-        dueTime: formData.dueTime,
+        dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
+        dueTime: timeDate ? format(timeDate, "h:mm a") : null,
       };
-      if (isEdit) {
+
+      if (taskId) {
         await apiClient.put(`/tasks/${taskId}`, taskData);
+        toast.success("Task updated successfully!");
       } else {
         await apiClient.post("/tasks/createTask", taskData);
+        toast.success("Task created successfully!");
       }
+
       navigate("/dashboard");
     } catch (error) {
-      console.error("Task submission error:", error);
+      console.error("Failed to save task:", error);
+      toast.error(taskId ? "Failed to update task" : "Failed to create task");
     }
   };
 
@@ -58,7 +110,7 @@ const TaskForm = ({ isEdit = false, initialData = null }) => {
             transition={{ delay: 0.2 }}
             className="text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-500 to-pink-500 bg-clip-text text-transparent text-center mb-8"
           >
-            {isEdit ? "Edit Task" : "Create New Task"}
+            {taskId ? "Edit Task" : "Create New Task"}
           </motion.h2>
 
           <motion.div
@@ -84,20 +136,32 @@ const TaskForm = ({ isEdit = false, initialData = null }) => {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Due Time
-              </label>
-              <input
-                type="time"
-                name="dueTime"
-                value={formData.dueTime}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg
-                            focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent
-                            transition-all duration-300 ease-in-out"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  name="dueDate"
+                  value={formData.dueDate}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Due Time
+                </label>
+                <input
+                  type="time"
+                  name="dueTime"
+                  value={formData.dueTime}
+                  onChange={handleChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
             </div>
 
             <div>
@@ -119,22 +183,6 @@ const TaskForm = ({ isEdit = false, initialData = null }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Due Date
-                </label>
-                <input
-                  type="date"
-                  name="dueDate"
-                  value={formData.dueDate}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg
-                            focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent
-                            transition-all duration-300 ease-in-out"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Priority
                 </label>
                 <select
@@ -150,25 +198,25 @@ const TaskForm = ({ isEdit = false, initialData = null }) => {
                   <option value="high">High</option>
                 </select>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Recurrence
-              </label>
-              <select
-                name="recurrence"
-                value={formData.recurrence}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg
-                          focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent
-                          transition-all duration-300 ease-in-out"
-              >
-                <option value="none">None</option>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Recurrence
+                </label>
+                <select
+                  name="recurrence"
+                  value={formData.recurrence}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg
+                            focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent
+                            transition-all duration-300 ease-in-out"
+                >
+                  <option value="none">None</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
             </div>
           </motion.div>
 
@@ -181,7 +229,7 @@ const TaskForm = ({ isEdit = false, initialData = null }) => {
                      focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
                      shadow-lg hover:shadow-xl transform"
           >
-            {isEdit ? "Update Task" : "Create Task"}
+            {taskId ? "Update Task" : "Create Task"}
           </motion.button>
         </form>
       </motion.div>

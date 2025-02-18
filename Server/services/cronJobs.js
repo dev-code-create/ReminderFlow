@@ -6,34 +6,59 @@ import { sendEmail } from "./email.js";
 import { sendPushNotification } from "./push.js";
 import { syncTaskToCalendar, pullFromCalendar } from "./calendarSync.js";
 import google from "googleapis";
+import { format } from "date-fns";
 
 // Run every minute to check for due tasks
 cron.schedule("* * * * *", async () => {
   try {
     const now = new Date();
+    // Find tasks that are due and haven't sent reminders
     const tasks = await Task.find({
       dueDate: { $lte: now },
-      dueTime: { $lte: now },
       status: { $ne: "completed" },
       reminderSent: { $ne: true },
     }).populate("creator");
 
     for (const task of tasks) {
-      // Send email reminder
+      // Send email reminder if enabled
       if (task.creator.notificationPreferences.email) {
-        await sendEmail(task.creator.email, {
-          subject: "Task Reminder",
-          text: `Your task "${task.title}" is due now!`,
-          html: `<h1>Task Reminder</h1><p>Your task "${task.title}" is due now!</p>`,
-        });
-      }
+        try {
+          const formattedDueDate = format(
+            new Date(task.dueDate),
+            "MMMM d, yyyy"
+          );
+          const formattedDueTime = task.dueTime || "No specific time";
 
-      // Send push notification
-      if (task.creator.notificationPreferences.push) {
-        await sendPushNotification(task.creator.id, {
-          title: "Task Due",
-          body: `Your task "${task.title}" is due now!`,
-        });
+          const emailSubject = "Task Reminder: Action Required";
+          const emailHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #2563EB;">Task Reminder</h2>
+              <p>Hello ${task.creator.firstName},</p>
+              <p>This is a reminder that your task is due:</p>
+              
+              <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #1f2937; margin-top: 0;">${task.title}</h3>
+                <p style="color: #4b5563;">${
+                  task.description || "No description provided"
+                }</p>
+                <p style="color: #4b5563;">
+                  <strong>Due Date:</strong> ${formattedDueDate}<br>
+                  <strong>Due Time:</strong> ${formattedDueTime}<br>
+                  <strong>Priority:</strong> ${task.priority}
+                </p>
+              </div>
+
+              <p>Please complete this task as soon as possible.</p>
+              <p>Best regards,<br>ReminderFlow Team</p>
+            </div>
+          `;
+
+          await sendEmail(task.creator.email, emailSubject, emailHtml);
+
+          console.log(`Email reminder sent for task: ${task.title}`);
+        } catch (emailError) {
+          console.error("Failed to send email reminder:", emailError);
+        }
       }
 
       // Mark reminder as sent

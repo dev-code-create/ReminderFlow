@@ -11,6 +11,8 @@ import {
   FaSpinner,
 } from "react-icons/fa";
 import apiClient from "../../services/api";
+import { toast } from "react-hot-toast";
+import { format, parseISO } from "date-fns";
 
 const TaskList = ({ onTaskUpdate }) => {
   const [tasks, setTasks] = useState([]);
@@ -28,7 +30,8 @@ const TaskList = ({ onTaskUpdate }) => {
       const response = await apiClient.get("/tasks/getTask");
       setTasks(response.data);
     } catch (error) {
-      console.error("Error fetching tasks:", error);
+      console.error("Failed to fetch tasks:", error);
+      toast.error("Failed to fetch tasks");
     }
   };
 
@@ -99,6 +102,16 @@ const TaskList = ({ onTaskUpdate }) => {
       default:
         return null;
     }
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "";
+    return format(new Date(date), "MMMM d, yyyy");
+  };
+
+  const formatTime = (time) => {
+    if (!time) return "";
+    return time;
   };
 
   return (
@@ -183,6 +196,26 @@ const TaskList = ({ onTaskUpdate }) => {
                 <p className="text-gray-600 mt-1">
                   {task.description || "No description"}
                 </p>
+                {task.dueDate && (
+                  <div className="mt-2 flex items-center text-sm">
+                    <span className="inline-flex items-center text-indigo-600">
+                      <svg
+                        className="mr-1.5 h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      Due: {formatDate(task.dueDate)}
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 <Link
@@ -210,10 +243,25 @@ const TaskList = ({ onTaskUpdate }) => {
                   {getStatusIcon(task.status)}
                   {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
                 </span>
-                <span className="text-gray-500">Due Time: {task.dueTime}</span>
-                <span className="text-gray-500">
-                  Due: {new Date(task.dueDate).toLocaleDateString()}
-                </span>
+                {task.dueTime && (
+                  <span className="inline-flex items-center text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full text-sm">
+                    <svg
+                      className="mr-1.5 h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    {formatDate(task.dueDate)}
+                    {task.dueTime && ` at ${formatTime(task.dueTime)}`}
+                  </span>
+                )}
               </div>
               <select
                 value={task.status}

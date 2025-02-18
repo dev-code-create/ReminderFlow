@@ -1,14 +1,34 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { motion } from "framer-motion";
-import { FaPlus, FaUserFriends, FaCog, FaCalendarAlt } from "react-icons/fa";
+import {
+  FaPlus,
+  FaUserFriends,
+  FaCog,
+  FaCalendarAlt,
+  FaSignOutAlt,
+  FaBell,
+} from "react-icons/fa";
+import { toast } from "react-hot-toast";
 
 const Navbar = () => {
   const { user } = useAuth();
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
 
   const letters = "ReminderFlow".split("");
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem("token");
+      toast.success("Logged out successfully");
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to logout");
+    }
+  };
 
   return (
     <motion.nav
@@ -103,6 +123,17 @@ const Navbar = () => {
               <span>Settings</span>
             </Link>
           </motion.div>
+
+          <motion.button
+            onClick={handleLogout}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 
+                     hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
+          >
+            <FaSignOutAlt className="text-lg" />
+            <span className="hidden sm:inline">Logout</span>
+          </motion.button>
         </div>
       </div>
     </motion.nav>

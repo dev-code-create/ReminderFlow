@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   FaBell,
   FaUser,
@@ -9,10 +10,13 @@ import {
   FaShieldAlt,
   FaToggleOn,
   FaSave,
+  FaSignOutAlt,
 } from "react-icons/fa";
 import apiClient from "../services/api";
+import { toast } from "react-hot-toast";
 
 const Settings = () => {
+  const navigate = useNavigate();
   const [settings, setSettings] = useState({
     notifications: {
       email: true,
@@ -57,6 +61,19 @@ const Settings = () => {
       setMessage({ type: "error", text: "Failed to update settings" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem("token");
+
+      toast.success("Logged out successfully");
+
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to logout");
     }
   };
 
@@ -191,6 +208,26 @@ const Settings = () => {
             {loading ? "Saving..." : "Save Settings"}
           </motion.button>
         </div>
+
+        {/* Add Logout Button */}
+        <motion.div
+          className="mt-8 border-t pt-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <motion.button
+            onClick={handleLogout}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full flex items-center justify-center gap-2 py-4 bg-red-600 
+                     text-white rounded-lg font-medium hover:bg-red-700 
+                     transition-colors duration-300"
+          >
+            <FaSignOutAlt className="text-xl" />
+            Logout
+          </motion.button>
+        </motion.div>
       </div>
     </div>
   );

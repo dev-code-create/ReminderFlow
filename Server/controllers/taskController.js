@@ -1,27 +1,27 @@
 import Task from "../models/task.model.js";
 
 export const createTask = async (req, res) => {
-  const { title, description, dueDate, dueTime, priority, recurrence } =
-    req.body;
-  const user = req.user;
-
   try {
+    const { title, description, dueDate, dueTime, priority, status } = req.body;
+
     const task = new Task({
       title,
       description,
-      dueDate,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
       dueTime,
-      priority,
+      priority: priority || "medium",
+      status: status || "pending",
       creator: req.user.id,
-      recurrence,
     });
 
     await task.save();
-
     res.status(201).json(task);
   } catch (error) {
-    console.error("Error creating task:", error.message, error.stack, error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Task creation error:", error);
+    res.status(500).json({
+      message: "Failed to create task",
+      error: error.message,
+    });
   }
 };
 
@@ -77,5 +77,22 @@ export const updateTaskStatus = async (req, res) => {
   } catch (error) {
     console.error("Update task status error:", error);
     res.status(500).json({ message: error.message });
+  }
+};
+
+// Add this new controller function
+export const getTask = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const task = await Task.findById(taskId);
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    res.json(task);
+  } catch (error) {
+    console.error("Get task error:", error);
+    res.status(500).json({ message: "Failed to fetch task" });
   }
 };
