@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FaGoogle, FaCalendarAlt, FaCheck, FaCog } from "react-icons/fa";
+import {
+  FaGoogle,
+  FaCalendarAlt,
+  FaCheck,
+  FaCog,
+  FaTimes,
+} from "react-icons/fa";
 import apiClient from "../../services/api";
 import { toast } from "react-hot-toast";
 
@@ -12,21 +18,26 @@ const CalendarSync = () => {
     lastSync: null,
   });
   const [syncFrequency, setSyncFrequency] = useState(15);
+  const [isConnected, setIsConnected] = useState(false);
 
   const fetchSyncStatus = async () => {
     try {
       const response = await apiClient.get("/calendar/status");
       if (response.data.integration) {
+        setIsConnected(true);
         setSyncStatus({
           enabled: response.data.integration.syncEnabled,
           lastSync: response.data.integration.lastSyncAt,
         });
         setSyncFrequency(response.data.integration.syncFrequency);
         setSelectedProvider(response.data.integration.provider);
+      } else {
+        setIsConnected(false);
       }
     } catch (error) {
       console.error("Failed to fetch sync status:", error);
       toast.error("Failed to fetch sync status");
+      setIsConnected(false);
     }
   };
 
@@ -68,6 +79,19 @@ const CalendarSync = () => {
     }
   };
 
+  const handleDisconnect = async () => {
+    try {
+      await apiClient.post("/calendar/disconnect");
+      setIsConnected(false);
+      setSyncStatus({ enabled: false, lastSync: null });
+      setSelectedProvider(null);
+      toast.success("Calendar disconnected successfully");
+    } catch (error) {
+      console.error("Failed to disconnect:", error);
+      toast.error("Failed to disconnect calendar");
+    }
+  };
+
   const handlePullFromCalendar = async () => {
     try {
       setIsSyncing(true);
@@ -92,6 +116,39 @@ const CalendarSync = () => {
     } catch (error) {
       console.error("Failed to update sync frequency:", error);
       toast.error("Failed to update sync frequency");
+    }
+  };
+
+  const saveTokens = async (accessToken, refreshToken, expiresIn) => {
+    try {
+      await apiClient.post("/calendar/connect", {
+        provider: "google",
+        accessToken,
+        refreshToken,
+        expiresAt: new Date(Date.now() + parseInt(expiresIn)),
+      });
+
+      setIsConnected(true);
+      toast.success("Calendar connected successfully!");
+      fetchSyncStatus();
+    } catch (error) {
+      console.error("Failed to save tokens:", error);
+      toast.error("Failed to connect calendar");
+      setIsConnected(false);
+    }
+  };
+
+  const handlePushToCalendar = async () => {
+    try {
+      setIsSyncing(true);
+      await apiClient.post("/calendar/sync-to-calendar");
+      toast.success("Tasks pushed to calendar successfully!");
+      fetchSyncStatus(); // Refresh the sync status
+    } catch (error) {
+      console.error("Failed to push tasks to calendar:", error);
+      toast.error("Failed to push tasks to calendar");
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -129,25 +186,8 @@ const CalendarSync = () => {
     const expiresIn = urlParams.get("expires_in");
 
     if (accessToken && refreshToken) {
-      // Save the tokens by calling your backend
-      const saveTokens = async () => {
-        try {
-          await apiClient.post("/calendar/connect", {
-            provider: "google",
-            accessToken,
-            refreshToken,
-            expiresAt: new Date(Date.now() + parseInt(expiresIn)),
-          });
-
-          toast.success("Calendar connected successfully!");
-          fetchSyncStatus();
-        } catch (error) {
-          console.error("Failed to save tokens:", error);
-          toast.error("Failed to connect calendar");
-        }
-      };
-
-      saveTokens();
+      // Pass the tokens to saveTokens
+      saveTokens(accessToken, refreshToken, expiresIn);
       // Clear URL params
       window.history.replaceState({}, "", window.location.pathname);
     }
@@ -196,20 +236,22 @@ const CalendarSync = () => {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => handleConnect(provider.name)}
+                    onClick={() =>
+                      isConnected
+                        ? handleDisconnect()
+                        : handleConnect(provider.name)
+                    }
                     className={`px-4 py-2 rounded-lg flex items-center space-x-2
                              ${
-                               syncStatus.enabled &&
-                               selectedProvider === provider.name
-                                 ? "bg-green-500 text-white"
+                               isConnected
+                                 ? "bg-red-500 hover:bg-red-600 text-white"
                                  : "bg-gradient-to-r from-indigo-600 to-purple-500 text-white"
                              }`}
                   >
-                    {syncStatus.enabled &&
-                    selectedProvider === provider.name ? (
+                    {isConnected ? (
                       <>
-                        <FaCheck className="text-sm" />
-                        <span>Connected</span>
+                        <FaTimes className="text-sm" />
+                        <span>Disconnect</span>
                       </>
                     ) : (
                       <>
@@ -289,6 +331,16 @@ const CalendarSync = () => {
              transition-all duration-300 disabled:opacity-50"
         >
           {isSyncing ? "Pulling..." : "Pull from Calendar"}
+        </motion.button>
+
+        <motion.button
+          onClick={handlePushToCalendar}
+          disabled={!syncStatus.enabled || isSyncing}
+          className="mt-4 w-full py-4 bg-gradient-to-r from-green-600 to-green-500 
+             text-white rounded-lg font-medium hover:shadow-lg 
+             transition-all duration-300 disabled:opacity-50"
+        >
+          {isSyncing ? "Pushing..." : "Push Tasks to Calendar"}
         </motion.button>
       </div>
     </div>

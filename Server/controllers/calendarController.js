@@ -111,12 +111,13 @@ const syncToCalendar = async (req, res) => {
   try {
     const userId = req.user.id;
     await syncAllTasks(userId);
-    res.json({ message: "Tasks synced successfully" });
+    res.json({ message: "Tasks pushed to calendar successfully" });
   } catch (error) {
     console.error("Sync error:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to sync tasks", error: error.message });
+    res.status(500).json({
+      message: "Failed to push tasks to calendar",
+      error: error.message,
+    });
   }
 };
 
@@ -203,6 +204,23 @@ const updateCalendarSettings = async (req, res) => {
   }
 };
 
+const disconnectCalendar = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Find and remove the calendar integration
+    await CalendarIntegration.findOneAndDelete({ user: userId });
+
+    res.json({ message: "Calendar disconnected successfully" });
+  } catch (error) {
+    console.error("Calendar disconnect error:", error);
+    res.status(500).json({
+      message: "Failed to disconnect calendar",
+      error: error.message,
+    });
+  }
+};
+
 // Single export statement for all functions
 export {
   connectCalendar,
@@ -213,4 +231,5 @@ export {
   getCalendarStatus,
   pullFromCalendar,
   updateCalendarSettings,
+  disconnectCalendar,
 };

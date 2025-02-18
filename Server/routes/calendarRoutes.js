@@ -9,6 +9,7 @@ import {
   getCalendarStatus,
   pullFromCalendar,
   updateCalendarSettings,
+  disconnectCalendar,
 } from "../controllers/calendarController.js";
 
 const router = express.Router();
@@ -24,5 +25,6 @@ router.post("/sync-to-calendar", authMiddleware, syncToCalendar);
 router.put("/toggle-sync", authMiddleware, toggleSync);
 router.post("/pull-from-calendar", authMiddleware, pullFromCalendar);
 router.put("/settings", authMiddleware, updateCalendarSettings);
+router.post("/disconnect", authMiddleware, disconnectCalendar);
 
 export default router;
