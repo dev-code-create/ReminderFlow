@@ -1,5 +1,8 @@
 import CalendarIntegration from "../models/calendarIntegration.model.js";
-import { syncAllTasks } from "../services/calendarSync.js";
+import {
+  syncAllTasks,
+  pullFromGoogleCalendar,
+} from "../services/calendarSync.js";
 import { google } from "googleapis";
 import Task from "../models/task.model.js";
 
@@ -9,14 +12,19 @@ const oauth2Client = new google.auth.OAuth2(
   `${process.env.BACKEND_URL}/api/calendar/google/callback`
 );
 
-export const connectCalendar = async (req, res) => {
+const connectCalendar = async (req, res) => {
   try {
     const { provider, accessToken, refreshToken, expiresAt } = req.body;
     const userId = req.user.id;
 
+    if (!accessToken) {
+      return res.status(400).json({ message: "Access token is required" });
+    }
+
     const calendarIntegration = await CalendarIntegration.findOneAndUpdate(
-      { user: userId, provider: provider.toLowerCase() },
+      { user: userId },
       {
+        provider: "google",
         accessToken,
         refreshToken,
         expiresAt: new Date(expiresAt),
@@ -48,13 +56,14 @@ export const connectCalendar = async (req, res) => {
     });
   } catch (error) {
     console.error("Calendar connection error:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to connect calendar", error: error.message });
+    res.status(500).json({
+      message: "Failed to connect calendar",
+      error: error.message,
+    });
   }
 };
 
-export const getCalendarIntegration = async (req, res) => {
+const getCalendarIntegration = async (req, res) => {
   try {
     const calendarIntegration = await CalendarIntegration.findOne({
       user: req.user.id,
@@ -67,26 +76,38 @@ export const getCalendarIntegration = async (req, res) => {
   }
 };
 
-export const toggleSync = async (req, res) => {
+const toggleSync = async (req, res) => {
   try {
-    const calendarIntegration = await CalendarIntegration.findOne({
-      user: req.user.id,
-    });
-    if (!calendarIntegration)
-      return res.status(404).json({ message: "No calendar Integration Found" });
-    calendarIntegration.syncEnabled = !calendarIntegration.syncEnabled;
-    await calendarIntegration.save();
+    const { enabled } = req.body; // Get the enabled state from request body
+    const userId = req.user.id;
+
+    const calendarIntegration = await CalendarIntegration.findOneAndUpdate(
+      { user: userId },
+      {
+        syncEnabled: enabled,
+        lastSyncAt: enabled ? new Date() : undefined, // Update lastSyncAt if enabling
+      },
+      { new: true }
+    );
+
+    if (!calendarIntegration) {
+      return res.status(404).json({ message: "No calendar integration found" });
+    }
+
     res.json({
-      message: `Sync ${
-        calendarIntegration.syncEnabled ? "enabled" : "disabled"
-      }`,
+      message: `Sync ${enabled ? "enabled" : "disabled"}`,
+      integration: calendarIntegration,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Toggle sync error:", error);
+    res.status(500).json({
+      message: "Failed to toggle sync",
+      error: error.message,
+    });
   }
 };
 
-export const syncToCalendar = async (req, res) => {
+const syncToCalendar = async (req, res) => {
   try {
     const userId = req.user.id;
     await syncAllTasks(userId);
@@ -99,7 +120,7 @@ export const syncToCalendar = async (req, res) => {
   }
 };
 
-export const initiateGoogleAuth = async (req, res) => {
+const initiateGoogleAuth = async (req, res) => {
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: "offline",
     scope: [
@@ -112,7 +133,7 @@ export const initiateGoogleAuth = async (req, res) => {
   res.json({ url: authUrl });
 };
 
-export const handleGoogleCallback = async (req, res) => {
+const handleGoogleCallback = async (req, res) => {
   const { code, state } = req.query;
   try {
     const { tokens } = await oauth2Client.getToken(code);
@@ -135,7 +156,7 @@ export const handleGoogleCallback = async (req, res) => {
   }
 };
 
-export const getCalendarStatus = async (req, res) => {
+const getCalendarStatus = async (req, res) => {
   try {
     const integration = await CalendarIntegration.findOne({
       user: req.user.id,
@@ -144,4 +165,52 @@ export const getCalendarStatus = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Failed to get status" });
   }
+};
+
+const pullFromCalendar = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    await pullFromGoogleCalendar(userId);
+    res.json({ message: "Calendar events pulled successfully" });
+  } catch (error) {
+    console.error("Pull from calendar error:", error);
+    res.status(500).json({
+      message: "Failed to pull from calendar",
+      error: error.message,
+    });
+  }
+};
+
+const updateCalendarSettings = async (req, res) => {
+  try {
+    const { syncFrequency } = req.body;
+    const userId = req.user.id;
+
+    const integration = await CalendarIntegration.findOneAndUpdate(
+      { user: userId },
+      { syncFrequency },
+      { new: true }
+    );
+
+    if (!integration) {
+      return res.status(404).json({ message: "No calendar integration found" });
+    }
+
+    res.json({ integration });
+  } catch (error) {
+    console.error("Settings update error:", error);
+    res.status(500).json({ message: "Failed to update settings" });
+  }
+};
+
+// Single export statement for all functions
+export {
+  connectCalendar,
+  syncToCalendar,
+  toggleSync,
+  initiateGoogleAuth,
+  handleGoogleCallback,
+  getCalendarStatus,
+  pullFromCalendar,
+  updateCalendarSettings,
 };

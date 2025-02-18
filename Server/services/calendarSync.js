@@ -22,8 +22,6 @@ const syncTaskToCalendar = async (userId, task) => {
 
     if (integration.provider === "google") {
       await syncToGoogleCalendar(integration, task);
-    } else if (integration.provider === "outlook") {
-      await syncToOutlookCalendar(integration, task);
     }
   } catch (error) {
     console.error("Calendar sync error:", error);
@@ -86,18 +84,24 @@ const pullFromCalendar = async (userId) => {
   try {
     const integration = await CalendarIntegration.findOne({
       user: userId,
+      provider: "google",
       syncEnabled: true,
     });
 
-    if (!integration) return;
-
-    if (integration.provider === "google") {
-      await pullFromGoogleCalendar(integration, userId);
-    } else if (integration.provider === "outlook") {
-      await pullFromOutlookCalendar(integration, userId);
+    if (!integration) {
+      console.log("No active Google Calendar integration found");
+      return;
     }
+
+    if (!integration.accessToken) {
+      console.error("No access token found for integration");
+      return;
+    }
+
+    await pullFromGoogleCalendar(integration, userId);
   } catch (error) {
-    console.error("Pull from calendar error:", error);
+    console.error("Calendar pull error:", error);
+    throw error;
   }
 };
 
@@ -161,107 +165,77 @@ async function syncToGoogleCalendar(integration, task) {
   }
 }
 
-// Outlook Calendar Functions
-async function syncToOutlookCalendar(integration, task) {
-  const endpoint = "https://graph.microsoft.com/v1.0/me/events";
+async function pullFromGoogleCalendar(userId) {
+  try {
+    const integration = await CalendarIntegration.findOne({
+      user: userId,
+      provider: "google",
+      syncEnabled: true,
+    });
 
-  const event = {
-    subject: task.title,
-    body: {
-      contentType: "text",
-      content: task.description,
-    },
-    start: {
-      dateTime: task.dueDate,
-      timeZone: "UTC",
-    },
-    end: {
-      dateTime: new Date(new Date(task.dueDate).getTime() + 60 * 60000),
-      timeZone: "UTC",
-    },
-    reminderMinutesBeforeStart: 30,
-  };
+    if (!integration) {
+      console.log("No active Google Calendar integration found");
+      return;
+    }
 
-  await axios.post(endpoint, event, {
-    headers: {
-      Authorization: `Bearer ${integration.accessToken}`,
-      "Content-Type": "application/json",
-    },
-  });
-}
+    oauth2Client.setCredentials({
+      access_token: integration.accessToken,
+      refresh_token: integration.refreshToken,
+    });
 
-async function pullFromGoogleCalendar(integration, userId) {
-  oauth2Client.setCredentials({
-    access_token: integration.accessToken,
-    refresh_token: integration.refreshToken,
-  });
+    const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-  const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+    // Get events from the last 24 hours and upcoming
+    const timeMin = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-  const response = await calendar.events.list({
-    calendarId: "primary",
-    timeMin: new Date().toISOString(),
-    maxResults: 100,
-    singleEvents: true,
-    orderBy: "startTime",
-  });
+    const response = await calendar.events.list({
+      calendarId: "primary",
+      timeMin: timeMin,
+      maxResults: 100,
+      singleEvents: true,
+      orderBy: "startTime",
+    });
 
-  for (const event of response.data.items) {
-    await Task.findOneAndUpdate(
-      {
-        creator: userId,
-        title: event.summary,
-        dueDate: new Date(event.start.dateTime),
-      },
-      {
-        $setOnInsert: {
-          title: event.summary,
-          description: event.description,
-          dueDate: new Date(event.start.dateTime),
+    for (const event of response.data.items) {
+      // Skip events that are already from ReminderFlow
+      if (event.extendedProperties?.private?.source === "ReminderFlow") {
+        continue;
+      }
+
+      await Task.findOneAndUpdate(
+        {
           creator: userId,
-          status: "pending",
+          calendarEventId: event.id,
         },
-      },
-      { upsert: true, new: true }
-    );
+        {
+          $setOnInsert: {
+            title: event.summary || "Untitled Event",
+            description: event.description || "",
+            dueDate: new Date(event.start.dateTime || event.start.date),
+            creator: userId,
+            status: "pending",
+            calendarEventId: event.id,
+            source: "google_calendar",
+          },
+        },
+        { upsert: true, new: true }
+      );
+    }
+
+    // Update last sync time
+    await CalendarIntegration.findByIdAndUpdate(integration._id, {
+      lastSyncAt: new Date(),
+    });
+  } catch (error) {
+    console.error("Error pulling from Google Calendar:", error);
+    throw error;
   }
 }
 
-async function pullFromOutlookCalendar(integration, userId) {
-  const endpoint = "https://graph.microsoft.com/v1.0/me/events";
-
-  const response = await axios.get(endpoint, {
-    headers: {
-      Authorization: `Bearer ${integration.accessToken}`,
-      "Content-Type": "application/json",
-    },
-  });
-
-  for (const event of response.data.value) {
-    await Task.findOneAndUpdate(
-      {
-        creator: userId,
-        title: event.subject,
-        dueDate: new Date(event.start.dateTime),
-      },
-      {
-        $setOnInsert: {
-          title: event.subject,
-          description: event.body.content,
-          dueDate: new Date(event.start.dateTime),
-          creator: userId,
-          status: "pending",
-        },
-      },
-      { upsert: true, new: true }
-    );
-  }
-}
-
-// Single export statement for all functions
+// Export all functions at the bottom
 export {
   syncTaskToCalendar,
   syncAllTasks,
   pullFromCalendar,
-  pullFromGoogleCalendar as syncEventsFromGoogleCalendar,
+  pullFromGoogleCalendar,
 };

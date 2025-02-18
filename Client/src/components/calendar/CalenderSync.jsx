@@ -1,12 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import {
-  FaGoogle,
-  FaCalendarAlt,
-  FaMicrosoft,
-  FaCheck,
-  FaCog,
-} from "react-icons/fa";
+import { FaGoogle, FaCalendarAlt, FaCheck, FaCog } from "react-icons/fa";
 import apiClient from "../../services/api";
 import { toast } from "react-hot-toast";
 
@@ -17,6 +11,7 @@ const CalendarSync = () => {
     enabled: false,
     lastSync: null,
   });
+  const [syncFrequency, setSyncFrequency] = useState(15);
 
   const fetchSyncStatus = async () => {
     try {
@@ -26,6 +21,7 @@ const CalendarSync = () => {
           enabled: response.data.integration.syncEnabled,
           lastSync: response.data.integration.lastSyncAt,
         });
+        setSyncFrequency(response.data.integration.syncFrequency);
         setSelectedProvider(response.data.integration.provider);
       }
     } catch (error) {
@@ -34,47 +30,29 @@ const CalendarSync = () => {
     }
   };
 
-  const handleSync = async () => {
-    if (!selectedProvider) return;
-
-    setIsSyncing(true);
+  const handleToggleSync = async (enabled) => {
     try {
-      // First connect the calendar
-      const response = await apiClient.post("/calendar/connect", {
-        provider: selectedProvider.toLowerCase().replace(" ", "-"),
+      const response = await apiClient.put("/calendar/toggle-sync", {
+        enabled,
       });
 
       if (response.data.integration) {
-        // After connecting, sync tasks
-        await apiClient.post("/calendar/sync-to-calendar");
+        setSyncStatus((prev) => ({
+          ...prev,
+          enabled: response.data.integration.syncEnabled,
+          lastSync: response.data.integration.lastSyncAt,
+        }));
 
-        setSyncStatus({
-          enabled: true,
-          lastSync: new Date(),
-        });
+        toast.success(response.data.message);
       }
     } catch (error) {
-      console.error("Sync failed:", error);
-      setSyncStatus({
-        enabled: false,
-        lastSync: null,
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  const handleToggleSync = async (enabled) => {
-    try {
-      await apiClient.put("/calendar/toggle-sync", {
-        enabled,
-      });
+      console.error("Toggle sync failed:", error);
+      toast.error("Failed to toggle sync");
+      // Revert the toggle if it failed
       setSyncStatus((prev) => ({
         ...prev,
-        enabled,
+        enabled: !enabled,
       }));
-    } catch (error) {
-      console.error("Toggle sync failed:", error);
     }
   };
 
@@ -84,9 +62,36 @@ const CalendarSync = () => {
         const response = await apiClient.get("/calendar/auth/google");
         window.location.href = response.data.url;
       }
-      // Add similar logic for Outlook
     } catch (error) {
       console.error("Connection failed:", error);
+      toast.error("Failed to connect to calendar");
+    }
+  };
+
+  const handlePullFromCalendar = async () => {
+    try {
+      setIsSyncing(true);
+      await apiClient.post("/calendar/pull-from-calendar");
+      toast.success("Calendar events pulled successfully!");
+      fetchSyncStatus();
+    } catch (error) {
+      console.error("Failed to pull from calendar:", error);
+      toast.error("Failed to pull from calendar");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSyncFrequencyChange = async (frequency) => {
+    try {
+      await apiClient.put("/calendar/settings", {
+        syncFrequency: parseInt(frequency),
+      });
+      setSyncFrequency(parseInt(frequency));
+      toast.success("Sync frequency updated");
+    } catch (error) {
+      console.error("Failed to update sync frequency:", error);
+      toast.error("Failed to update sync frequency");
     }
   };
 
@@ -135,7 +140,6 @@ const CalendarSync = () => {
           });
 
           toast.success("Calendar connected successfully!");
-          // Fetch updated sync status
           fetchSyncStatus();
         } catch (error) {
           console.error("Failed to save tokens:", error);
@@ -167,61 +171,61 @@ const CalendarSync = () => {
         </motion.div>
 
         {/* Calendar Providers */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          {[
-            { name: "Google Calendar", icon: FaGoogle, color: "" },
-            { name: "Microsoft Outlook", icon: FaMicrosoft, color: "blue" },
-          ].map((provider) => (
-            <motion.div
-              key={provider.name}
-              whileHover={{ scale: 1.02 }}
-              className={`bg-white p-6 rounded-xl shadow-sm border border-gray-100 
+        <div className="grid grid-cols-1 gap-6 mb-12 ">
+          {[{ name: "Google Calendar", icon: FaGoogle, color: "" }].map(
+            (provider) => (
+              <motion.div
+                key={provider.name}
+                whileHover={{ scale: 1.02 }}
+                className={`bg-white p-6 rounded-xl shadow-sm border border-gray-100 
                          ${
                            selectedProvider === provider.name
                              ? "ring-2 ring-indigo-500"
                              : ""
                          }`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-4">
-                  <provider.icon
-                    className={`text-${provider.color}-500 text-2xl`}
-                  />
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    {provider.name}
-                  </h3>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleConnect(provider.name)}
-                  className={`px-4 py-2 rounded-lg flex items-center space-x-2
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-4">
+                    <provider.icon
+                      className={`text-${provider.color}-500 text-2xl`}
+                    />
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      {provider.name}
+                    </h3>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleConnect(provider.name)}
+                    className={`px-4 py-2 rounded-lg flex items-center space-x-2
                              ${
                                syncStatus.enabled &&
                                selectedProvider === provider.name
                                  ? "bg-green-500 text-white"
                                  : "bg-gradient-to-r from-indigo-600 to-purple-500 text-white"
                              }`}
-                >
-                  {syncStatus.enabled && selectedProvider === provider.name ? (
-                    <>
-                      <FaCheck className="text-sm" />
-                      <span>Connected</span>
-                    </>
-                  ) : (
-                    <>
-                      <FaCalendarAlt className="text-sm" />
-                      <span>Connect</span>
-                    </>
-                  )}
-                </motion.button>
-              </div>
-              <p className="text-gray-600 text-sm">
-                Sync your tasks with {provider.name} to manage everything in one
-                place
-              </p>
-            </motion.div>
-          ))}
+                  >
+                    {syncStatus.enabled &&
+                    selectedProvider === provider.name ? (
+                      <>
+                        <FaCheck className="text-sm" />
+                        <span>Connected</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaCalendarAlt className="text-sm" />
+                        <span>Connect</span>
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  Sync your tasks with {provider.name} to manage everything in
+                  one place
+                </p>
+              </motion.div>
+            )
+          )}
         </div>
 
         {/* Sync Settings */}
@@ -259,6 +263,8 @@ const CalendarSync = () => {
             <div className="flex items-center justify-between">
               <span className="text-gray-600 ">Sync Frequency</span>
               <select
+                value={syncFrequency}
+                onChange={(e) => handleSyncFrequencyChange(e.target.value)}
                 className="px-8 py-2 bg-gray-50 border border-gray-200 rounded-lg
                                focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
@@ -276,13 +282,13 @@ const CalendarSync = () => {
         </motion.div>
 
         <motion.button
-          onClick={handleSync}
-          disabled={!selectedProvider || isSyncing}
-          className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-500 
-                   text-white rounded-lg font-medium hover:shadow-lg 
-                   transition-all duration-300 disabled:opacity-50"
+          onClick={handlePullFromCalendar}
+          disabled={!syncStatus.enabled || isSyncing}
+          className="mt-4 w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-500 
+             text-white rounded-lg font-medium hover:shadow-lg 
+             transition-all duration-300 disabled:opacity-50"
         >
-          {isSyncing ? "Syncing..." : "Connect Calendar"}
+          {isSyncing ? "Pulling..." : "Pull from Calendar"}
         </motion.button>
       </div>
     </div>

@@ -4,7 +4,7 @@ const calendarIntegrationSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   provider: {
     type: String,
-    enum: ["google", "outlook"],
+    enum: ["google"],
     required: true,
   },
   accessToken: {
@@ -21,6 +21,11 @@ const calendarIntegrationSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  syncFrequency: {
+    type: Number,
+    enum: [15, 30, 60], // minutes
+    default: 15,
+  },
   lastSyncAt: {
     type: Date,
   },
@@ -28,7 +33,7 @@ const calendarIntegrationSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  updateAt: {
+  updatedAt: {
     type: Date,
     default: Date.now,
   },

@@ -26,7 +26,6 @@ const taskSchema = new mongoose.Schema({
       enum: ["none", "daily", "weekly", "monthly"],
       default: "none",
     },
-
     endDate: { type: Date },
   },
   reminders: [
@@ -38,6 +37,15 @@ const taskSchema = new mongoose.Schema({
   ],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+  calendarEventId: {
+    type: String,
+    sparse: true, // Allows null values and creates index
+  },
+  source: {
+    type: String,
+    enum: ["manual", "google_calendar", "outlook"],
+    default: "manual",
+  },
 });
 
 const Task = mongoose.model("Task", taskSchema);

@@ -7,11 +7,9 @@ import {
   initiateGoogleAuth,
   handleGoogleCallback,
   getCalendarStatus,
+  pullFromCalendar,
+  updateCalendarSettings,
 } from "../controllers/calendarController.js";
-import {
-  syncAllTasks,
-  pullFromCalendar as syncEventsFromGoogleCalendar,
-} from "../services/calendarSync.js";
 
 const router = express.Router();
 
@@ -24,10 +22,7 @@ router.get("/status", authMiddleware, getCalendarStatus);
 router.post("/connect", authMiddleware, connectCalendar);
 router.post("/sync-to-calendar", authMiddleware, syncToCalendar);
 router.put("/toggle-sync", authMiddleware, toggleSync);
-router.post(
-  "/pull-from-calendar",
-  authMiddleware,
-  syncEventsFromGoogleCalendar
-);
+router.post("/pull-from-calendar", authMiddleware, pullFromCalendar);
+router.put("/settings", authMiddleware, updateCalendarSettings);
 
 export default router;

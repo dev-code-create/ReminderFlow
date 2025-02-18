@@ -45,31 +45,43 @@ cron.schedule("* * * * *", async () => {
 });
 
 // Sync calendars every 15 minutes
-cron.schedule("*/15 * * * *", async () => {
+cron.schedule("* * * * *", async () => {
   try {
     const integrations = await CalendarIntegration.find({
       syncEnabled: true,
     }).populate("user");
 
     for (const integration of integrations) {
-      // Pull events from calendar
-      await pullFromCalendar(integration.user._id);
+      const lastSync = integration.lastSyncAt || new Date(0);
+      const minutesSinceLastSync = Math.floor(
+        (Date.now() - lastSync.getTime()) / (1000 * 60)
+      );
 
-      // Sync tasks to calendar
-      const tasks = await Task.find({
-        creator: integration.user._id,
-        updatedAt: {
-          $gte: new Date(Date.now() - 15 * 60 * 1000), // Last 15 minutes
-        },
-      });
+      if (minutesSinceLastSync >= integration.syncFrequency) {
+        try {
+          // Pull from calendar
+          await pullFromCalendar(integration.user._id);
 
-      for (const task of tasks) {
-        await syncTaskToCalendar(integration.user._id, task);
+          // Sync tasks to calendar
+          const tasks = await Task.find({
+            creator: integration.user._id,
+            updatedAt: { $gte: lastSync },
+          });
+
+          for (const task of tasks) {
+            await syncTaskToCalendar(integration.user._id, task);
+          }
+
+          // Update last sync time
+          integration.lastSyncAt = new Date();
+          await integration.save();
+        } catch (syncError) {
+          console.error(
+            `Sync error for user ${integration.user._id}:`,
+            syncError
+          );
+        }
       }
-
-      // Update last sync time
-      integration.lastSyncAt = new Date();
-      await integration.save();
     }
   } catch (error) {
     console.error("Calendar sync cron error:", error);
