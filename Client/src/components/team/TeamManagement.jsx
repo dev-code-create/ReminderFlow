@@ -46,13 +46,24 @@ const TeamManagement = () => {
 
   const handleCreateTeam = async (e) => {
     e.preventDefault();
+
     try {
-      const response = await apiClient.post("/teams", newTeam);
+      if (!newTeam.name.trim()) {
+        toast.error("Team name is required");
+        return;
+      }
+
+      const response = await apiClient.post("/teams", {
+        name: newTeam.name.trim(),
+        description: newTeam.description.trim(),
+      });
+
       setTeams([...teams, response.data]);
       setShowCreateModal(false);
       setNewTeam({ name: "", description: "" });
       toast.success("Team created successfully");
     } catch (error) {
+      console.error("Team creation error:", error);
       toast.error(error.response?.data?.message || "Failed to create team");
     }
   };

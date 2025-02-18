@@ -10,6 +10,15 @@ const TeamTaskDashboard = () => {
   const [team, setTeam] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [newTask, setNewTask] = useState({
+    title: "",
+    description: "",
+    dueDate: "",
+    dueTime: "",
+    priority: "medium",
+    assignedTo: "",
+    status: "pending",
+  });
 
   useEffect(() => {
     fetchTeamDetails();
@@ -49,6 +58,19 @@ const TeamTaskDashboard = () => {
       toast.success("Task deleted successfully");
     } catch (error) {
       toast.error("Failed to delete task");
+    }
+  };
+
+  const handleCreateTask = async (taskData) => {
+    try {
+      await apiClient.post(`/teams/${teamId}/tasks`, {
+        ...taskData,
+        teamId,
+      });
+      fetchTeamDetails();
+      toast.success("Task created successfully");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to create task");
     }
   };
 
@@ -130,6 +152,148 @@ const TeamTaskDashboard = () => {
               </div>
             </motion.div>
           ))}
+        </div>
+
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            Create New Task
+          </h2>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleCreateTask(newTask);
+            }}
+          >
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="title"
+                  className="block text-sm font-medium text-gray-800"
+                >
+                  Title
+                </label>
+                <input
+                  id="title"
+                  name="title"
+                  value={newTask.title}
+                  onChange={(e) =>
+                    setNewTask({ ...newTask, title: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-800"
+                >
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={newTask.description}
+                  onChange={(e) =>
+                    setNewTask({ ...newTask, description: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="dueDate"
+                  className="block text-sm font-medium text-gray-800"
+                >
+                  Due Date
+                </label>
+                <input
+                  id="dueDate"
+                  name="dueDate"
+                  type="date"
+                  value={newTask.dueDate}
+                  onChange={(e) =>
+                    setNewTask({ ...newTask, dueDate: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="dueTime"
+                  className="block text-sm font-medium text-gray-800"
+                >
+                  Due Time
+                </label>
+                <input
+                  id="dueTime"
+                  name="dueTime"
+                  type="time"
+                  value={newTask.dueTime}
+                  onChange={(e) =>
+                    setNewTask({ ...newTask, dueTime: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="priority"
+                  className="block text-sm font-medium text-gray-800"
+                >
+                  Priority
+                </label>
+                <select
+                  id="priority"
+                  name="priority"
+                  value={newTask.priority}
+                  onChange={(e) =>
+                    setNewTask({ ...newTask, priority: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  required
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="assignedTo"
+                  className="block text-sm font-medium text-gray-800"
+                >
+                  Assigned To
+                </label>
+                <select
+                  id="assignedTo"
+                  name="assignedTo"
+                  value={newTask.assignedTo}
+                  onChange={(e) =>
+                    setNewTask({ ...newTask, assignedTo: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  required
+                >
+                  <option value="">Select Member</option>
+                  {team.members.map((member) => (
+                    <option key={member.user._id} value={member.user._id}>
+                      {member.user.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <button
+              type="submit"
+              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md"
+            >
+              Create Task
+            </button>
+          </form>
         </div>
       </div>
     </div>

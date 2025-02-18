@@ -59,17 +59,53 @@ const teamSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
+    trim: true,
   },
-  description: String,
+  description: {
+    type: String,
+    trim: true,
+  },
   creator: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
-  members: [memberSchema],
+  members: [
+    {
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+      email: {
+        type: String,
+        required: true,
+      },
+      role: {
+        type: String,
+        enum: ["admin", "member"],
+        default: "member",
+      },
+      status: {
+        type: String,
+        enum: ["pending", "active"],
+        default: "active",
+      },
+      joinedAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
   tasks: [taskSchema],
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const Team = mongoose.model("Team", teamSchema);

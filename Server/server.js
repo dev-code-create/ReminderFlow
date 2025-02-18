@@ -11,6 +11,7 @@ import calendarRoutes from "./routes/calendarRoutes.js";
 import calendarOauth from "./routes/calendarOauth.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
 import teamRoutes from "./routes/teamRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 scheduleRecurringTask();
 dotenv.config();
@@ -32,6 +33,7 @@ app.use("/api/calendar", calendarRoutes);
 app.use("/api/calendarAuth", calendarOauth);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/teams", teamRoutes);
+app.use("/api/users", userRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
