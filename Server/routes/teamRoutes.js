@@ -2,20 +2,33 @@ import express from "express";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import {
   createTeam,
-  deleteTeam,
   getTeams,
+  getTeamById,
+  updateTeam,
+  deleteTeam,
   inviteMember,
-  updateTeamMember,
-  removeTeamMember,
+  removeMember,
+  createTeamTask,
+  updateTeamTask,
+  deleteTeamTask,
 } from "../controllers/teamController.js";
 
 const router = express.Router();
 
-router.post("/createTeam", authMiddleware, createTeam);
-router.get("/getTeam", authMiddleware, getTeams);
-router.post("/:id/invite", authMiddleware, inviteMember);
+// Team routes
+router.post("/", authMiddleware, createTeam);
+router.get("/", authMiddleware, getTeams);
+router.get("/:teamId", authMiddleware, getTeamById);
+router.put("/:teamId", authMiddleware, updateTeam);
 router.delete("/:teamId", authMiddleware, deleteTeam);
-router.put("/:teamId/members/:memberId", authMiddleware, updateTeamMember);
-router.delete("/:teamId/members/:memberId", authMiddleware, removeTeamMember);
+
+// Team member routes
+router.post("/:teamId/members", authMiddleware, inviteMember);
+router.delete("/:teamId/members/:memberId", authMiddleware, removeMember);
+
+// Team task routes
+router.post("/:teamId/tasks", authMiddleware, createTeamTask);
+router.put("/:teamId/tasks/:taskId", authMiddleware, updateTeamTask);
+router.delete("/:teamId/tasks/:taskId", authMiddleware, deleteTeamTask);
 
 export default router;
