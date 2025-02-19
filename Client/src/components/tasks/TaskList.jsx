@@ -117,7 +117,7 @@ const TaskList = ({ onTaskUpdate }) => {
   return (
     <div className="space-y-6">
       {/* Search and Filter Section */}
-      <div className="bg-white p-4 rounded-xl shadow-sm space-y-4">
+      <div className="bg-white p-4 rounded-xl shadow-sm space-y-4 hidden md:block">
         <div className="flex gap-4">
           <div className="flex-1 relative">
             <FaSearch className="absolute left-3 top-3 text-gray-400" />
