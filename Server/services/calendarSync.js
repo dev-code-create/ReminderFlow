@@ -1,5 +1,4 @@
 import { google } from "googleapis";
-import axios from "axios";
 import Task from "../models/task.model.js";
 import CalendarIntegration from "../models/calendarIntegration.model.js";
 
@@ -10,119 +9,23 @@ const oauth2Client = new google.auth.OAuth2(
   `${process.env.BACKEND_URL}/api/calendar/google/callback`
 );
 
-// Sync tasks to calendar
-const syncTaskToCalendar = async (userId, task) => {
-  try {
-    const integration = await CalendarIntegration.findOne({
-      user: userId,
-      syncEnabled: true,
-    });
-
-    if (!integration) return;
-
-    if (integration.provider === "google") {
-      await syncToGoogleCalendar(integration, task);
-    }
-  } catch (error) {
-    console.error("Calendar sync error:", error);
-  }
-};
-
-// Sync all tasks
-const syncAllTasks = async (userId) => {
-  try {
-    const integration = await CalendarIntegration.findOne({
-      user: userId,
-      provider: "google",
-      syncEnabled: true,
-    });
-
-    if (!integration) {
-      console.log("No active Google Calendar integration found");
-      return;
-    }
-
-    // Get all pending and in-progress tasks
-    const tasks = await Task.find({
-      creator: userId,
-      dueDate: { $exists: true, $ne: null }, // Only sync tasks with due dates
-      dueTime: { $exists: true, $ne: null }, // Only sync tasks with due times
-    }).exec();
-
-    if (tasks.length === 0) {
-      console.log("No tasks found with due dates");
-      return;
-    }
-
-    for (const task of tasks) {
-      try {
-        console.log("Attempting to sync task:", {
-          id: task._id,
-          title: task.title,
-          dueDate: task.dueDate,
-          dueTime: task.dueTime,
-          status: task.status,
-        });
-        await syncToGoogleCalendar(integration, task);
-      } catch (error) {
-        console.error(`Failed to sync task ${task.title}:`, error);
-        continue;
-      }
-    }
-
-    // Update last sync time
-    await CalendarIntegration.findByIdAndUpdate(integration._id, {
-      lastSyncAt: new Date(),
-    });
-    console.log("Sync completed successfully");
-  } catch (error) {
-    console.error("Sync all tasks error:", error);
-    throw error;
-  }
-};
-
-// Pull events from calendar
-const pullFromCalendar = async (userId) => {
-  try {
-    const integration = await CalendarIntegration.findOne({
-      user: userId,
-      provider: "google",
-      syncEnabled: true,
-    });
-
-    if (!integration) {
-      console.log("No active Google Calendar integration found");
-      return;
-    }
-
-    if (!integration.accessToken) {
-      console.error("No access token found for integration");
-      return;
-    }
-
-    await pullFromGoogleCalendar(integration, userId);
-  } catch (error) {
-    console.error("Calendar pull error:", error);
-    throw error;
-  }
-};
-
-// Google Calendar Functions
-async function syncToGoogleCalendar(integration, task) {
+// Sync a single task to calendar
+export const syncTaskToCalendar = async (task, calendarIntegration) => {
   try {
     oauth2Client.setCredentials({
-      access_token: integration.accessToken,
-      refresh_token: integration.refreshToken,
+      access_token: calendarIntegration.accessToken,
+      refresh_token: calendarIntegration.refreshToken,
     });
 
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
     // Format the task date properly
     const taskDate = new Date(task.dueDate);
-    const taskTime = new Date(task.dueTime);
-    const endDate = new Date(
-      taskDate.getTime() + taskTime.getTime() + 60 * 60 * 1000
-    ); // 1 hour duration
+    if (task.dueTime) {
+      const [hours, minutes] = task.dueTime.split(":");
+      taskDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0);
+    }
+    const endDate = new Date(taskDate.getTime() + 60 * 60 * 1000); // 1 hour duration
 
     const event = {
       summary: task.title,
@@ -136,12 +39,10 @@ async function syncToGoogleCalendar(integration, task) {
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       },
       reminders: {
-        useDefault: true, // Use default reminders instead of custom
+        useDefault: true,
       },
-      // Make the event visible
       visibility: "public",
       transparency: "opaque",
-      // Add metadata
       extendedProperties: {
         private: {
           taskId: task._id.toString(),
@@ -150,27 +51,65 @@ async function syncToGoogleCalendar(integration, task) {
       },
     };
 
-    try {
-      const result = await calendar.events.insert({
+    // If task already has a calendar event, update it
+    if (task.calendarEventId) {
+      await calendar.events.update({
+        calendarId: "primary",
+        eventId: task.calendarEventId,
+        resource: event,
+      });
+    } else {
+      // Create new calendar event
+      const response = await calendar.events.insert({
         calendarId: "primary",
         resource: event,
       });
-      console.log("Event created successfully:", result.data);
-    } catch (apiError) {
-      console.error("Google Calendar API Error:", {
-        code: apiError.code,
-        message: apiError.message,
-        errors: apiError.errors,
-      });
-      throw apiError;
+      await task.updateCalendarSync(response.data.id);
     }
+
+    return true;
   } catch (error) {
-    console.error("Error in syncToGoogleCalendar:", error);
+    console.error("Calendar sync error:", error);
+    await task.setCalendarSyncError(error);
     throw error;
   }
-}
+};
 
-async function pullFromGoogleCalendar(userId) {
+// Sync all tasks for a user
+export const syncAllTasks = async (userId) => {
+  try {
+    const integration = await CalendarIntegration.findOne({
+      user: userId,
+      syncEnabled: true,
+    });
+
+    if (!integration) {
+      console.log("No active calendar integration found for user");
+      return;
+    }
+
+    const tasks = await Task.find({
+      $or: [{ creator: userId }, { assignees: userId }],
+      dueDate: { $exists: true },
+    });
+
+    for (const task of tasks) {
+      if (task.needsCalendarSync()) {
+        try {
+          await syncTaskToCalendar(task, integration);
+        } catch (error) {
+          console.error(`Failed to sync task ${task._id}:`, error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Sync all tasks error:", error);
+    throw error;
+  }
+};
+
+// Pull events from Google Calendar
+export const pullFromGoogleCalendar = async (userId) => {
   try {
     const integration = await CalendarIntegration.findOne({
       user: userId,
@@ -192,10 +131,13 @@ async function pullFromGoogleCalendar(userId) {
 
     // Get events from the last 24 hours and upcoming
     const timeMin = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const timeMax = new Date();
+    timeMax.setDate(timeMax.getDate() + 7);
 
     const response = await calendar.events.list({
       calendarId: "primary",
       timeMin: timeMin,
+      timeMax: timeMax.toISOString(),
       maxResults: 100,
       singleEvents: true,
       orderBy: "startTime",
@@ -217,7 +159,9 @@ async function pullFromGoogleCalendar(userId) {
             title: event.summary || "Untitled Event",
             description: event.description || "",
             dueDate: new Date(event.start.dateTime || event.start.date),
-            dueTime: new Date(event.start.dateTime || event.start.date),
+            dueTime: event.start.dateTime
+              ? new Date(event.start.dateTime).toTimeString().slice(0, 5)
+              : null,
             creator: userId,
             status: "pending",
             calendarEventId: event.id,
@@ -232,16 +176,10 @@ async function pullFromGoogleCalendar(userId) {
     await CalendarIntegration.findByIdAndUpdate(integration._id, {
       lastSyncAt: new Date(),
     });
+
+    return response.data.items;
   } catch (error) {
     console.error("Error pulling from Google Calendar:", error);
     throw error;
   }
-}
-
-// Export all functions at the bottom
-export {
-  syncTaskToCalendar,
-  syncAllTasks,
-  pullFromCalendar,
-  pullFromGoogleCalendar,
 };

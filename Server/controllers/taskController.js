@@ -1,21 +1,54 @@
 import Task from "../models/task.model.js";
+import CalendarIntegration from "../models/calendarIntegration.model.js";
+import { syncTaskToCalendar } from "../services/calendarSync.js";
 
 export const createTask = async (req, res) => {
   try {
-    const { title, description, dueDate, dueTime, priority, status } = req.body;
+    const { title, description, dueDate, dueTime, priority } = req.body;
 
+    // Validate required fields
+    if (!title) {
+      return res.status(400).json({ message: "Title is required" });
+    }
+
+    // Create new task
     const task = new Task({
       title,
       description,
       dueDate: dueDate ? new Date(dueDate) : undefined,
       dueTime,
       priority: priority || "medium",
-      status: status || "pending",
       creator: req.user.id,
+      status: "pending",
     });
 
     await task.save();
-    res.status(201).json(task);
+
+    // Check if user has calendar integration enabled
+    const calendarIntegration = await CalendarIntegration.findOne({
+      user: req.user.id,
+      syncEnabled: true,
+    });
+
+    if (calendarIntegration && task.dueDate) {
+      try {
+        // Sync task to calendar
+        await syncTaskToCalendar(task, calendarIntegration);
+        task.calendarEventId = task.calendarEventId; // Save the calendar event ID
+        await task.save();
+      } catch (syncError) {
+        console.error("Calendar sync error:", syncError);
+        // Continue with task creation even if calendar sync fails
+      }
+    }
+
+    // Populate creator details
+    const populatedTask = await Task.findById(task._id).populate(
+      "creator",
+      "email firstName lastName"
+    );
+
+    res.status(201).json(populatedTask);
   } catch (error) {
     console.error("Task creation error:", error);
     res.status(500).json({

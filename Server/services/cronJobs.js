@@ -4,7 +4,7 @@ import User from "../models/user.model.js";
 import CalendarIntegration from "../models/calendarIntegration.model.js";
 import { sendEmail } from "./email.js";
 import { sendPushNotification } from "./push.js";
-import { syncTaskToCalendar, pullFromCalendar } from "./calendarSync.js";
+import { syncTaskToCalendar, pullFromGoogleCalendar } from "./calendarSync.js";
 import google from "googleapis";
 import { format } from "date-fns";
 
@@ -70,49 +70,47 @@ cron.schedule("* * * * *", async () => {
   }
 });
 
-// Sync calendars every 15 minutes
-cron.schedule("* * * * *", async () => {
-  try {
-    const integrations = await CalendarIntegration.find({
-      syncEnabled: true,
-    }).populate("user");
+// Schedule calendar sync every 15 minutes
+export const startCalendarSync = () => {
+  cron.schedule("*/15 * * * *", async () => {
+    try {
+      const integrations = await CalendarIntegration.find({
+        syncEnabled: true,
+      });
 
-    for (const integration of integrations) {
-      const lastSync = integration.lastSyncAt || new Date(0);
-      const minutesSinceLastSync = Math.floor(
-        (Date.now() - lastSync.getTime()) / (1000 * 60)
-      );
-
-      if (minutesSinceLastSync >= integration.syncFrequency) {
+      for (const integration of integrations) {
         try {
-          // Pull from calendar
-          await pullFromCalendar(integration.user._id);
+          // Pull events from calendar
+          await pullFromGoogleCalendar(integration.user);
 
-          // Sync tasks to calendar
+          // Get user's tasks that need syncing
           const tasks = await Task.find({
-            creator: integration.user._id,
-            updatedAt: { $gte: lastSync },
+            creator: integration.user,
+            dueDate: { $exists: true },
           });
 
+          // Sync each task to calendar
           for (const task of tasks) {
-            await syncTaskToCalendar(integration.user._id, task);
+            if (task.needsCalendarSync()) {
+              try {
+                await syncTaskToCalendar(task, integration);
+              } catch (taskError) {
+                console.error(`Failed to sync task ${task._id}:`, taskError);
+              }
+            }
           }
-
-          // Update last sync time
-          integration.lastSyncAt = new Date();
-          await integration.save();
-        } catch (syncError) {
+        } catch (userError) {
           console.error(
-            `Sync error for user ${integration.user._id}:`,
-            syncError
+            `Failed to sync calendar for user ${integration.user}:`,
+            userError
           );
         }
       }
+    } catch (error) {
+      console.error("Calendar sync cron job error:", error);
     }
-  } catch (error) {
-    console.error("Calendar sync cron error:", error);
-  }
-});
+  });
+};
 
 // Clean up old completed tasks monthly
 cron.schedule("0 0 1 * *", async () => {
