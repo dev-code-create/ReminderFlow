@@ -11,10 +11,6 @@
       "src": "/(.*)",
       "dest": "server.js"
     }
-  ],
-  "env": {
-    "MONGO_URL": "mongodb+srv://ayushkankale04:jA2WoaxvhyR7CQZJ@chat-app-data.jrsjv.mongodb.net/?retryWrites=true&w=majority&appName=Chat-App-Data",
-    "JWT_SECRET": "helo",
-    "FRONTEND_URL": "https://reminder-flow.vercel.app"
-  }
+  ]
+
 } 
