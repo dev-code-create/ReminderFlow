@@ -18,13 +18,21 @@ dotenv.config();
 mongoDB();
 const app = express();
 
+// Updated CORS configuration
 app.use(
   cors({
-    origin: "*",
-    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
+    origin: [
+      "https://reminder-flow-3w7c.vercel.app",
+      "https://reminder-flow.vercel.app",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );
+
+// Handle preflight requests explicitly
+app.options("*", cors());
+
 app.use(express.json());
 
 app.use("/api/users", authRoutes);
