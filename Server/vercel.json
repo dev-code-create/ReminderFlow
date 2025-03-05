@@ -1,5 +1,7 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/:path*" }
-  ]
+    { "source": "/(.*)", "destination": "/api/$1" },
+    { "source": "/users/(.*)", "destination": "/api/users/$1" }
+  ],
+  "version": 2
 }
