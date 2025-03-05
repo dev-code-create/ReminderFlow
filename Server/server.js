@@ -20,7 +20,7 @@ const app = express();
 // Updated CORS configuration
 app.use(
   cors({
-    origin: "https://reminder-flow-3w7c.vercel.app",
+    origin: "https://reminder-flow-eight.vercel.app",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
