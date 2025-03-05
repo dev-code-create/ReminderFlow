@@ -21,8 +21,11 @@ const app = express();
 app.use(
   cors({
     origin: "https://reminder-flow-3w7c.vercel.app",
-    methods: "GET,POST,PUT,DELETE",
+    methods: "GET,POST,PUT,DELETE,OPTIONS",
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ["Content-Length", "X-Foo", "X-Bar"],
+    maxAge: 86400,
   })
 );
 app.use(express.json());
