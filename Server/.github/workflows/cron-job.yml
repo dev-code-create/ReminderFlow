@@ -1,0 +1,17 @@
+name: Run Cron Job Every Minute
+
+on:
+  schedule:
+    # This cron expression runs every minute
+    - cron: "* * * * *"
+
+jobs:
+  cronjob:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Trigger Vercel Cron Job API
+        run: |
+          curl -X POST https://reminder-backend-gamma.vercel.app/api/tasks/cron

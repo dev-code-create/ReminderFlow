@@ -9,28 +9,29 @@ import google from "googleapis";
 import { format } from "date-fns";
 
 // Run every minute to check for due tasks
-cron.schedule("* * * * *", async () => {
-  try {
-    const now = new Date();
-    // Find tasks that are due and haven't sent reminders
-    const tasks = await Task.find({
-      dueDate: { $lte: now },
-      status: { $ne: "completed" },
-      reminderSent: { $ne: true },
-    }).populate("creator");
+export const ReminderEmail = () => {
+  cron.schedule("* * * * *", async () => {
+    try {
+      const now = new Date();
+      // Find tasks that are due and haven't sent reminders
+      const tasks = await Task.find({
+        dueDate: { $lte: now },
+        status: { $ne: "completed" },
+        reminderSent: { $ne: true },
+      }).populate("creator");
 
-    for (const task of tasks) {
-      // Send email reminder if enabled
-      if (task.creator.notificationPreferences.email) {
-        try {
-          const formattedDueDate = format(
-            new Date(task.dueDate),
-            "MMMM d, yyyy"
-          );
-          const formattedDueTime = task.dueTime || "No specific time";
+      for (const task of tasks) {
+        // Send email reminder if enabled
+        if (task.creator.notificationPreferences.email) {
+          try {
+            const formattedDueDate = format(
+              new Date(task.dueDate),
+              "MMMM d, yyyy"
+            );
+            const formattedDueTime = task.dueTime || "No specific time";
 
-          const emailSubject = "Task Reminder: Action Required";
-          const emailHtml = `
+            const emailSubject = "Task Reminder: Action Required";
+            const emailHtml = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #2563EB;">Task Reminder</h2>
               <p>Hello ${task.creator.firstName},</p>
@@ -53,22 +54,23 @@ cron.schedule("* * * * *", async () => {
             </div>
           `;
 
-          await sendEmail(task.creator.email, emailSubject, emailHtml);
+            await sendEmail(task.creator.email, emailSubject, emailHtml);
 
-          console.log(`Email reminder sent for task: ${task.title}`);
-        } catch (emailError) {
-          console.error("Failed to send email reminder:", emailError);
+            console.log(`Email reminder sent for task: ${task.title}`);
+          } catch (emailError) {
+            console.error("Failed to send email reminder:", emailError);
+          }
         }
-      }
 
-      // Mark reminder as sent
-      task.reminderSent = true;
-      await task.save();
+        // Mark reminder as sent
+        task.reminderSent = true;
+        await task.save();
+      }
+    } catch (error) {
+      console.error("Task reminder cron error:", error);
     }
-  } catch (error) {
-    console.error("Task reminder cron error:", error);
-  }
-});
+  });
+};
 
 // Schedule calendar sync every 15 minutes
 export const startCalendarSync = () => {

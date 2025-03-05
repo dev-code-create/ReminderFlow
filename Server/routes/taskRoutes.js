@@ -7,6 +7,7 @@ import {
   getTask,
 } from "../controllers/taskController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
+import { ReminderEmail } from "../services/cronJobs.js";
 
 const router = express.Router();
 
@@ -15,5 +16,6 @@ router.get("/getTask", getTasks);
 router.delete("/:taskId", authMiddleware, deleteTask);
 router.put("/:taskId/status", authMiddleware, updateTaskStatus);
 router.get("/:taskId", authMiddleware, getTask);
+router.get("/cron", ReminderEmail);
 
 export default router;
